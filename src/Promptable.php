@@ -11,6 +11,8 @@ use Laravel\Ai\Attributes\Provider as ProviderAttribute;
 use Laravel\Ai\Attributes\Timeout as TimeoutAttribute;
 use Laravel\Ai\Attributes\UseCheapestModel;
 use Laravel\Ai\Attributes\UseSmartestModel;
+use Laravel\Ai\Contracts\HasSkills;
+use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Events\AgentFailedOver;
 use Laravel\Ai\Exceptions\FailoverableException;
 use Laravel\Ai\Gateway\FakeTextGateway;
@@ -21,6 +23,7 @@ use Laravel\Ai\Providers\Provider;
 use Laravel\Ai\Responses\AgentResponse;
 use Laravel\Ai\Responses\QueuedAgentResponse;
 use Laravel\Ai\Responses\StreamableAgentResponse;
+use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Streaming\Events\StreamEvent;
 use ReflectionClass;
 
@@ -50,6 +53,8 @@ trait Promptable
         ?string $model = null,
         ?int $timeout = null): AgentResponse
     {
+        $this->bootSkills();
+
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->prompt(
                 new AgentPrompt($this, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
@@ -69,6 +74,8 @@ trait Promptable
         ?string $model = null,
         ?int $timeout = null): StreamableAgentResponse
     {
+        $this->bootSkills();
+
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->stream(
                 new AgentPrompt($this, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
@@ -83,6 +90,8 @@ trait Promptable
      */
     public function queue(string $prompt, array $attachments = [], array|string|null $provider = null, ?string $model = null): QueuedAgentResponse
     {
+        $this->bootSkills();
+
         if (static::isFaked()) {
             Ai::recordPrompt(
                 new QueuedAgentPrompt($this, $prompt, $attachments, $provider, $model),
@@ -120,6 +129,8 @@ trait Promptable
      */
     public function broadcastOnQueue(string $prompt, Channel|array $channels, array $attachments = [], ?string $provider = null, ?string $model = null): QueuedAgentResponse
     {
+        $this->bootSkills();
+
         if (static::isFaked()) {
             Ai::recordPrompt(
                 new QueuedAgentPrompt($this, $prompt, $attachments, $provider, $model),
@@ -131,6 +142,35 @@ trait Promptable
         return new QueuedAgentResponse(
             BroadcastAgent::dispatch($this, $prompt, $channels, $attachments, $provider, $model)
         );
+    }
+
+    /**
+     * Boot the agent skills.
+     */
+    protected function bootSkills(): void
+    {
+        if (! $this instanceof HasSkills) {
+            return;
+        }
+
+        $registry = app(SkillRegistry::class);
+
+        foreach ($this->skills() as $skill) {
+            $registry->load($skill);
+        }
+
+        if ($this instanceof HasTools && property_exists($this, 'tools') && is_array($this->tools)) {
+            $this->tools = array_merge($this->tools, $registry->tools());
+        }
+
+        if (property_exists($this, 'instructions') && is_string($this->instructions)) {
+            $mode = $this->skillDiscoveryMode()->value;
+            $instructions = $registry->instructions($mode);
+
+            if (! empty($instructions)) {
+                $this->instructions .= PHP_EOL.PHP_EOL.$instructions;
+            }
+        }
     }
 
     /**
