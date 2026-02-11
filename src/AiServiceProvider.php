@@ -10,6 +10,8 @@ use Laravel\Ai\Console\Commands\ChatCommand;
 use Laravel\Ai\Console\Commands\MakeAgentCommand;
 use Laravel\Ai\Console\Commands\MakeToolCommand;
 use Laravel\Ai\Contracts\ConversationStore;
+use Laravel\Ai\Skills\SkillDiscovery;
+use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Storage\DatabaseConversationStore;
 
 class AiServiceProvider extends ServiceProvider
@@ -23,6 +25,17 @@ class AiServiceProvider extends ServiceProvider
     {
         $this->app->scoped(AiManager::class, fn ($app): AiManager => new AiManager($app));
         $this->app->singleton(ConversationStore::class, DatabaseConversationStore::class);
+
+        $this->app->scoped(SkillDiscovery::class, function ($app) {
+            return new SkillDiscovery(
+                config('ai.skills.paths', [resource_path('skills')]),
+                $app['cache']->store(config('ai.skills.cache'))
+            );
+        });
+
+        $this->app->singleton(SkillRegistry::class, function ($app) {
+            return new SkillRegistry($app->make(SkillDiscovery::class));
+        });
 
         $this->mergeConfigFrom(__DIR__.'/../config/ai.php', 'ai');
     }
