@@ -1,0 +1,14 @@
+---
+name: Dummy Skill
+description: A dummy skill for testing.
+version: 1.0.0
+triggers:
+  - dummy
+  - test
+tools: []
+constraints: []
+---
+
+# Dummy Skill
+
+This is a dummy skill body.

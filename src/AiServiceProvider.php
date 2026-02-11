@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Stringable;
 use Laravel\Ai\Console\Commands\ChatCommand;
 use Laravel\Ai\Console\Commands\MakeAgentCommand;
+use Laravel\Ai\Console\Commands\MakeSkillCommand;
 use Laravel\Ai\Console\Commands\MakeToolCommand;
 use Laravel\Ai\Contracts\ConversationStore;
 use Laravel\Ai\Skills\SkillDiscovery;
@@ -106,6 +107,7 @@ class AiServiceProvider extends ServiceProvider
         $this->commands([
             // ChatCommand::class,
             MakeAgentCommand::class,
+            MakeSkillCommand::class,
             MakeToolCommand::class,
         ]);
     }
@@ -123,6 +125,7 @@ class AiServiceProvider extends ServiceProvider
             __DIR__.'/../stubs/agent.stub' => base_path('stubs/agent.stub'),
             __DIR__.'/../stubs/structured-agent.stub' => base_path('stubs/structured-agent.stub'),
             __DIR__.'/../stubs/tool.stub' => base_path('stubs/tool.stub'),
+            __DIR__.'/../stubs/skill.stub' => base_path('stubs/skill.stub'),
         ], 'ai-stubs');
 
         $this->publishesMigrations([
