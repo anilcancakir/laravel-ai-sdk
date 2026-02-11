@@ -59,9 +59,9 @@ trait GeneratesText
                 $response = $this->textGateway()->generateText(
                     $this,
                     $prompt->model,
-                    (string) $agent->instructions(),
+                    $prompt->instructions ?? (string) $agent->instructions(),
                     $messages,
-                    $agent instanceof HasTools ? $agent->tools() : [],
+                    $agent instanceof HasTools ? array_merge($agent->tools(), $prompt->tools) : $prompt->tools,
                     $agent instanceof HasStructuredOutput ? $agent->schema(new JsonSchemaTypeFactory) : null,
                     TextGenerationOptions::forAgent($agent),
                     $prompt->timeout,
