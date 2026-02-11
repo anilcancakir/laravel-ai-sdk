@@ -71,4 +71,11 @@ class SkillRegistry
 
         return '';
     }
+
+    public function tools(): array
+    {
+        return collect($this->skills)
+            ->flatMap(fn (Skill $skill) => $skill->tools)
+            ->all();
+    }
 }

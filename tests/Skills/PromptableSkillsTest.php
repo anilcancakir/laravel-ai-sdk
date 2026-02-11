@@ -2,10 +2,12 @@
 
 namespace Tests\Skills;
 
+use Laravel\Ai\Ai;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasSkills;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
+use Laravel\Ai\Skills\SkillAgentDecorator;
 use Laravel\Ai\Skills\SkillDiscoveryMode;
 use Laravel\Ai\Skills\SkillRegistry;
 use Mockery;
@@ -13,12 +15,13 @@ use Tests\TestCase;
 
 class PromptableSkillsTest extends TestCase
 {
-    public function test_it_loads_skills_and_merges_tools_when_prompting()
+    public function test_it_wraps_agent_in_decorator_and_merges_tools_when_prompting()
     {
         $registry = Mockery::mock(SkillRegistry::class);
         $registry->shouldReceive('load')->with('test-skill')->once();
         $registry->shouldReceive('tools')->andReturn(['tool_from_skill']);
         $registry->shouldReceive('instructions')->with('full')->andReturn('Skill instructions');
+        $registry->shouldReceive('getLoaded')->andReturn(['test-skill' => 'dummy']);
 
         $this->app->instance(SkillRegistry::class, $registry);
 
@@ -41,7 +44,7 @@ class PromptableSkillsTest extends TestCase
                 return ['existing_tool'];
             }
 
-            public function instructions(): string
+            public function instructions(): \Illuminate\Support\Stringable|string
             {
                 return 'Base instructions';
             }
@@ -52,25 +55,25 @@ class PromptableSkillsTest extends TestCase
 
         $agent->prompt('hello');
 
-        // Assertions are handled by Mockery expectations on $registry
-        // We also implicitly verify that the agent prompt execution didn't crash
-        $this->assertTrue(true);
+        $agent::assertPrompted(function ($prompt) {
+            // The prompt agent MUST be the decorator for this to work
+            return $prompt->agent instanceof SkillAgentDecorator;
+        });
     }
 
-    public function test_it_appends_skill_instructions()
+    public function test_it_appends_skill_instructions_via_decorator()
     {
         $registry = Mockery::mock(SkillRegistry::class);
         $registry->shouldReceive('load')->with('test-skill');
         $registry->shouldReceive('tools')->andReturn([]);
         $registry->shouldReceive('instructions')->with('full')->andReturn('Skill instructions');
+        $registry->shouldReceive('getLoaded')->andReturn(['test-skill' => 'dummy']);
 
         $this->app->instance(SkillRegistry::class, $registry);
 
         $agent = new class implements Agent, HasSkills
         {
             use Promptable;
-
-            public $instructions = 'Base instructions';
 
             public function skills(): iterable
             {
@@ -82,9 +85,9 @@ class PromptableSkillsTest extends TestCase
                 return SkillDiscoveryMode::Full;
             }
 
-            public function instructions(): string
+            public function instructions(): \Illuminate\Support\Stringable|string
             {
-                return $this->instructions;
+                return 'Base instructions';
             }
         };
 
@@ -92,9 +95,8 @@ class PromptableSkillsTest extends TestCase
 
         $agent->prompt('hello');
 
-        // We cannot easily inspect the modified instructions without the proxy implementation detail
-        // exposed, or by inspecting the AgentPrompt passed to the provider.
-        // For now, we rely on the registry mock expectations.
-        $this->assertTrue(true);
+        $agent::assertPrompted(function ($prompt) {
+            return $prompt->agent instanceof SkillAgentDecorator;
+        });
     }
 }

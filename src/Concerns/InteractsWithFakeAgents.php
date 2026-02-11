@@ -44,8 +44,15 @@ trait InteractsWithFakeAgents
      */
     public function hasFakeGatewayFor(Agent|string $agent): bool
     {
+        if (is_object($agent)) {
+            while ($agent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
+                $agent = $agent->agent();
+            }
+            $agent = $agent::class;
+        }
+
         return array_key_exists(
-            is_object($agent) ? $agent::class : $agent,
+            $agent,
             $this->fakeAgentGateways
         );
     }
@@ -55,9 +62,15 @@ trait InteractsWithFakeAgents
      */
     public function fakeGatewayFor(Agent $agent): FakeTextGateway
     {
-        return $this->hasFakeGatewayFor($agent)
-            ? $this->fakeAgentGateways[$agent::class]
-            : throw new InvalidArgumentException('Agent ['.$agent::class.'] has not been faked.');
+        // Unwrap decoration if needed
+        $originalAgent = $agent;
+        while ($originalAgent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
+            $originalAgent = $originalAgent->agent();
+        }
+
+        return $this->hasFakeGatewayFor($originalAgent)
+            ? $this->fakeAgentGateways[$originalAgent::class]
+            : throw new InvalidArgumentException('Agent ['.$originalAgent::class.'] has not been faked.');
     }
 
     /**
@@ -65,10 +78,19 @@ trait InteractsWithFakeAgents
      */
     public function recordPrompt(AgentPrompt|QueuedAgentPrompt $prompt): self
     {
+        $agent = $prompt->agent;
+
+        // Unwrap decorators to find the real agent class
+        while ($agent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
+            $agent = $agent->agent();
+        }
+
+        $agentClass = $agent::class;
+
         if ($prompt instanceof QueuedAgentPrompt) {
-            $this->recordedQueuedPrompts[$prompt->agent::class][] = $prompt;
+            $this->recordedQueuedPrompts[$agentClass][] = $prompt;
         } else {
-            $this->recordedPrompts[$prompt->agent::class][] = $prompt;
+            $this->recordedPrompts[$agentClass][] = $prompt;
         }
 
         return $this;
@@ -83,12 +105,19 @@ trait InteractsWithFakeAgents
         ?array $prompts = null,
         ?string $message = null): self
     {
+        // Debugging: dump recorded prompts if assertions fail?
+        // No, let's just make sure we are looking at the right key.
+        // $agent passed here is the class string from static::class in Promptable trait.
+
         $callback = is_string($callback)
             ? fn ($prompt) => $prompt->prompt === $callback
             : $callback;
 
+        $recorded = $prompts ?? $this->recordedPrompts[$agent] ?? [];
+
         PHPUnit::assertTrue(
-            (new Collection($prompts ?? $this->recordedPrompts[$agent] ?? []))->contains(function ($prompt) use ($callback) {
+
+            (new Collection($recorded))->contains(function ($prompt) use ($callback) {
                 return $callback($prompt);
             }),
             $message ?? 'An expected prompt was not received.'
