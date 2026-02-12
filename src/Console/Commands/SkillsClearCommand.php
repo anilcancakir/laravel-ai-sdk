@@ -4,6 +4,7 @@ namespace Laravel\Ai\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Ai\Skills\SkillDiscovery;
 
 class SkillsClearCommand extends Command
 {
@@ -26,7 +27,7 @@ class SkillsClearCommand extends Command
      */
     public function handle(): int
     {
-        Cache::store(config('ai.skills.cache'))->forget('ai_sdk_skills');
+        Cache::store(config('ai.skills.cache'))->forget(SkillDiscovery::CACHE_KEY);
 
         $this->info('Skill cache cleared successfully.');
 

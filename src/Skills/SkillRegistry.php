@@ -7,12 +7,16 @@ use Illuminate\Support\Collection;
 class SkillRegistry
 {
     /**
-     * @var array<string, Skill>
+     * The loaded skills.
+     *
+     * @var array<string, \Laravel\Ai\Skills\Skill>
      */
     protected array $skills = [];
 
     /**
-     * @var array<string, SkillMode>
+     * The modes for the loaded skills.
+     *
+     * @var array<string, \Laravel\Ai\Skills\SkillMode>
      */
     protected array $skillModes = [];
 

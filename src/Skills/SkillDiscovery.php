@@ -8,8 +8,18 @@ use Symfony\Component\Finder\Finder;
 
 class SkillDiscovery
 {
-    private const string CACHE_KEY = 'ai_sdk_skills';
+    /**
+     * The cache key for storing discovered skills.
+     *
+     * @var string
+     */
+    public const string CACHE_KEY = 'ai_sdk_skills';
 
+    /**
+     * Create a new skill discovery instance.
+     *
+     * @param  array<int, string>  $paths
+     */
     public function __construct(
         protected array $paths,
         protected Repository $cache,

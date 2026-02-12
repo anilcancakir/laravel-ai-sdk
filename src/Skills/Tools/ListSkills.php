@@ -12,10 +12,24 @@ class ListSkills implements Tool
 {
     private ?string $memoizedDescription = null;
 
+    /**
+     * Create a new tool instance.
+     */
     public function __construct(
         protected SkillRegistry $registry
     ) {}
 
+    /**
+     * Get the name of the tool.
+     */
+    public function name(): string
+    {
+        return 'skill_list';
+    }
+
+    /**
+     * Get the description of the tool.
+     */
     public function description(): Stringable|string
     {
         if ($this->memoizedDescription !== null) {

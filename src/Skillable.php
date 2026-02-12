@@ -10,6 +10,9 @@ use Laravel\Ai\Skills\Tools\SkillReferenceReader;
 
 trait Skillable
 {
+    /**
+     * The skill registry instance.
+     */
     protected ?SkillRegistry $skillRegistry = null;
 
     /**

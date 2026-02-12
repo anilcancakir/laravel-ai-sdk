@@ -8,6 +8,9 @@ use Symfony\Component\Finder\SplFileInfo;
 
 final readonly class Skill
 {
+    /**
+     * Create a new skill instance.
+     */
     public function __construct(
         public string $name,
         public string $description,

@@ -10,10 +10,24 @@ use Laravel\Ai\Tools\Request;
 
 class SkillReferenceReader implements Tool
 {
+    /**
+     * Create a new tool instance.
+     */
     public function __construct(
         protected SkillRegistry $registry
     ) {}
 
+    /**
+     * Get the name of the tool.
+     */
+    public function name(): string
+    {
+        return 'skill_read';
+    }
+
+    /**
+     * Get the description of the tool.
+     */
     public function description(): Stringable|string
     {
         return 'Reads a file from a skill\'s directory.';

@@ -273,10 +273,6 @@ trait Promptable
         }
 
         if (method_exists($this, 'skillInstructions')) {
-            if (method_exists($this, 'bootSkillsIfNeeded')) {
-                $this->bootSkillsIfNeeded();
-            }
-
             $skillInstructions = $this->skillInstructions();
 
             if (! empty($skillInstructions)) {
