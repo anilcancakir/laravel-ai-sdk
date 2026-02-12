@@ -18,25 +18,6 @@ class SkillTest extends TestCase
         $this->assertSame('my-coding-skill', $skill->slug());
     }
 
-    public function test_skill_has_tools()
-    {
-        $skillWithoutTools = new Skill(
-            name: 'Skill',
-            description: 'Desc',
-            instructions: 'Inst'
-        );
-
-        $skillWithTools = new Skill(
-            name: 'Skill',
-            description: 'Desc',
-            instructions: 'Inst',
-            tools: ['weather']
-        );
-
-        $this->assertFalse($skillWithoutTools->hasTools());
-        $this->assertTrue($skillWithTools->hasTools());
-    }
-
     public function test_skill_matches_trigger()
     {
         $skill = new Skill(

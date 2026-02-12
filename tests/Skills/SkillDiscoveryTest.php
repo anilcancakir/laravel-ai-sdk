@@ -114,4 +114,30 @@ Body');
 
         $this->assertNull($discovery->resolve('Non Existent'));
     }
+
+    public function test_returns_empty_collection_for_empty_paths()
+    {
+        $discovery = new SkillDiscovery([], Cache::store('array'));
+
+        $this->assertTrue($discovery->discover()->isEmpty());
+    }
+
+    public function test_it_accepts_custom_cache_ttl()
+    {
+        $skillDir = $this->tempPath.'/ttl-skill';
+        File::makeDirectory($skillDir);
+        File::put($skillDir.'/SKILL.md', '---
+name: TTL Skill
+description: Description
+---
+Body');
+
+        $cache = Cache::store('array');
+        $discovery = new SkillDiscovery([$this->tempPath], $cache, 60);
+
+        $skills = $discovery->discover();
+
+        $this->assertCount(1, $skills);
+        $this->assertTrue($cache->has('ai_sdk_skills'));
+    }
 }

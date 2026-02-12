@@ -13,7 +13,6 @@ class SkillParserTest extends TestCase
 ---
 name: my-skill
 description: A useful skill
-tools: [weather]
 triggers: [weather, forecast]
 version: 1.0.0
 constraints:
@@ -28,7 +27,6 @@ MD;
         $this->assertNotNull($skill);
         $this->assertSame('my-skill', $skill->name);
         $this->assertSame('A useful skill', $skill->description);
-        $this->assertSame(['weather'], $skill->tools);
         $this->assertSame(['weather', 'forecast'], $skill->triggers);
         $this->assertSame('1.0.0', $skill->version);
         $this->assertSame(['os' => 'macos'], $skill->constraints);
@@ -86,7 +84,6 @@ MD;
         $skill = SkillParser::parse($markdown);
 
         $this->assertNotNull($skill);
-        $this->assertSame([], $skill->tools);
         $this->assertSame([], $skill->triggers);
         $this->assertNull($skill->version);
         $this->assertSame([], $skill->constraints);
@@ -106,5 +103,15 @@ MD;
         $skill = SkillParser::parse($markdown);
 
         $this->assertSame('# Header'.PHP_EOL.'- list item', $skill->instructions);
+    }
+
+    public function test_returns_null_for_content_without_frontmatter()
+    {
+        $markdown = <<<'MD'
+# Just Markdown
+No frontmatter here at all.
+MD;
+
+        $this->assertNull(SkillParser::parse($markdown));
     }
 }

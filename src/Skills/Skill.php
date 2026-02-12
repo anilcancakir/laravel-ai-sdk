@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 final readonly class Skill
 {
     /**
-     * @param  array<string, mixed>  $tools
      * @param  array<string>  $triggers
      * @param  array<string, mixed>  $constraints
      */
@@ -15,7 +14,6 @@ final readonly class Skill
         public string $name,
         public string $description,
         public string $instructions,
-        public array $tools = [],
         public array $triggers = [],
         public ?string $version = null,
         public array $constraints = [],
@@ -23,16 +21,17 @@ final readonly class Skill
         public ?string $basePath = null,
     ) {}
 
+    /**
+     * Get the URL-friendly slug for the skill name.
+     */
     public function slug(): string
     {
         return Str::slug($this->name);
     }
 
-    public function hasTools(): bool
-    {
-        return count($this->tools) > 0;
-    }
-
+    /**
+     * Determine if the given input matches any of the skill's triggers.
+     */
     public function matchesTrigger(string $input): bool
     {
         return Str::contains(

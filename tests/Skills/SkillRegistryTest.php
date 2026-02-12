@@ -3,6 +3,7 @@
 namespace Tests\Skills;
 
 use Laravel\Ai\Skills\Skill;
+use Laravel\Ai\Skills\SkillMode;
 use Laravel\Ai\Skills\SkillRegistry;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -91,7 +92,47 @@ class SkillRegistryTest extends TestCase
         $this->assertEquals($expected, $registry->instructions('lite'));
     }
 
-    public function test_it_generates_empty_string_in_none_mode()
+    public function test_it_prioritizes_specific_skill_mode_over_global_mode()
+    {
+        $discovery = Mockery::mock('Laravel\Ai\Skills\SkillDiscovery');
+        $fullSkill = new Skill('full-skill', 'Full Desc', 'Full Instr');
+        $liteSkill = new Skill('lite-skill', 'Lite Desc', 'Lite Instr');
+        $defaultSkill = new Skill('default-skill', 'Default Desc', 'Default Instr');
+
+        $discovery->shouldReceive('resolve')->with('full-skill')->andReturn($fullSkill);
+        $discovery->shouldReceive('resolve')->with('lite-skill')->andReturn($liteSkill);
+        $discovery->shouldReceive('resolve')->with('default-skill')->andReturn($defaultSkill);
+
+        $registry = new SkillRegistry($discovery);
+
+        // Load with specific modes
+        $registry->load('full-skill', 'full');
+        $registry->load('lite-skill', 'lite');
+        // Load without specific mode
+        $registry->load('default-skill');
+
+        // Request global mode as 'lite'
+        // full-skill should stay full
+        // lite-skill should stay lite
+        // default-skill should be lite (from global)
+        $xml = $registry->instructions('lite');
+
+        $this->assertStringContainsString('<skill name="full-skill">'.PHP_EOL.'Full Instr'.PHP_EOL.'</skill>', $xml);
+        $this->assertStringContainsString('<skill name="lite-skill" description="Lite Desc" />', $xml);
+        $this->assertStringContainsString('<skill name="default-skill" description="Default Desc" />', $xml);
+
+        // Request global mode as 'full'
+        // full-skill should stay full
+        // lite-skill should stay lite
+        // default-skill should be full (from global)
+        $xmlFull = $registry->instructions('full');
+
+        $this->assertStringContainsString('<skill name="full-skill">'.PHP_EOL.'Full Instr'.PHP_EOL.'</skill>', $xmlFull);
+        $this->assertStringContainsString('<skill name="lite-skill" description="Lite Desc" />', $xmlFull);
+        $this->assertStringContainsString('<skill name="default-skill">'.PHP_EOL.'Default Instr'.PHP_EOL.'</skill>', $xmlFull);
+    }
+
+    public function test_none_mode_returns_empty_string()
     {
         $discovery = Mockery::mock('Laravel\Ai\Skills\SkillDiscovery');
         $skill = new Skill('test-skill', 'Description', 'Instructions');
@@ -101,7 +142,6 @@ class SkillRegistryTest extends TestCase
         $registry = new SkillRegistry($discovery);
         $registry->load('test-skill');
 
-        $this->assertEquals('', $registry->instructions('none'));
-        $this->assertEquals('', $registry->instructions(null));
+        $this->assertSame('', $registry->instructions(SkillMode::None));
     }
 }

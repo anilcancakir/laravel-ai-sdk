@@ -4,16 +4,16 @@ namespace {{ namespace }};
 
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
-use Laravel\Ai\Contracts\HasSkills;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Promptable;
-use Laravel\Ai\Skills\SkillDiscoveryMode;
+// use Laravel\Ai\Skillable; // Uncomment to enable skill support
 use Stringable;
 
-class {{ class }} implements Agent, Conversational, HasTools, HasSkills
+class {{ class }} implements Agent, Conversational, HasTools
 {
     use Promptable;
+    // use Skillable; // Uncomment to enable skill support
 
     /**
      * Get the instructions that the agent should follow.
@@ -39,21 +39,5 @@ class {{ class }} implements Agent, Conversational, HasTools, HasSkills
     public function tools(): iterable
     {
         return [];
-    }
-
-    /**
-     * Get the skills available to the agent.
-     */
-    public function skills(): iterable
-    {
-        return [];
-    }
-
-    /**
-     * Get the skill discovery mode for the agent.
-     */
-    public function skillDiscoveryMode(): SkillDiscoveryMode
-    {
-        return SkillDiscoveryMode::None;
     }
 }

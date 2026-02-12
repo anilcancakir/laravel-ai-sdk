@@ -11,7 +11,6 @@ use Laravel\Ai\Attributes\Provider as ProviderAttribute;
 use Laravel\Ai\Attributes\Timeout as TimeoutAttribute;
 use Laravel\Ai\Attributes\UseCheapestModel;
 use Laravel\Ai\Attributes\UseSmartestModel;
-use Laravel\Ai\Contracts\HasSkills;
 use Laravel\Ai\Events\AgentFailedOver;
 use Laravel\Ai\Exceptions\FailoverableException;
 use Laravel\Ai\Gateway\FakeTextGateway;
@@ -22,7 +21,6 @@ use Laravel\Ai\Providers\Provider;
 use Laravel\Ai\Responses\AgentResponse;
 use Laravel\Ai\Responses\QueuedAgentResponse;
 use Laravel\Ai\Responses\StreamableAgentResponse;
-use Laravel\Ai\Skills\SkillAgentDecorator;
 use Laravel\Ai\Streaming\Events\StreamEvent;
 use ReflectionClass;
 
@@ -52,15 +50,18 @@ trait Promptable
         ?string $model = null,
         ?int $timeout = null): AgentResponse
     {
-        $agent = $this;
-
-        if ($this instanceof HasSkills) {
-            $agent = new SkillAgentDecorator($this);
-        }
-
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->prompt(
-                new AgentPrompt($agent, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
+                new AgentPrompt(
+                    $this,
+                    $prompt,
+                    $attachments,
+                    $provider,
+                    $model,
+                    $this->getTimeout($timeout),
+                    $this->getTools(),
+                    $this->getInstructions()
+                )
             ),
             $provider,
             $model,
@@ -77,15 +78,18 @@ trait Promptable
         ?string $model = null,
         ?int $timeout = null): StreamableAgentResponse
     {
-        $agent = $this;
-
-        if ($this instanceof HasSkills) {
-            $agent = new SkillAgentDecorator($this);
-        }
-
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->stream(
-                new AgentPrompt($agent, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
+                new AgentPrompt(
+                    $this,
+                    $prompt,
+                    $attachments,
+                    $provider,
+                    $model,
+                    $this->getTimeout($timeout),
+                    $this->getTools(),
+                    $this->getInstructions()
+                )
             ),
             $provider,
             $model,
@@ -97,22 +101,16 @@ trait Promptable
      */
     public function queue(string $prompt, array $attachments = [], array|string|null $provider = null, ?string $model = null): QueuedAgentResponse
     {
-        $agent = $this;
-
-        if ($this instanceof HasSkills) {
-            $agent = new SkillAgentDecorator($this);
-        }
-
         if (static::isFaked()) {
             Ai::recordPrompt(
-                new QueuedAgentPrompt($agent, $prompt, $attachments, $provider, $model),
+                new QueuedAgentPrompt($this, $prompt, $attachments, $provider, $model),
             );
 
             return new QueuedAgentResponse(new FakePendingDispatch);
         }
 
         return new QueuedAgentResponse(
-            InvokeAgent::dispatch($agent, $prompt, $attachments, $provider, $model)
+            InvokeAgent::dispatch($this, $prompt, $attachments, $provider, $model)
         );
     }
 
@@ -140,22 +138,16 @@ trait Promptable
      */
     public function broadcastOnQueue(string $prompt, Channel|array $channels, array $attachments = [], ?string $provider = null, ?string $model = null): QueuedAgentResponse
     {
-        $agent = $this;
-
-        if ($this instanceof HasSkills) {
-            $agent = new SkillAgentDecorator($this);
-        }
-
         if (static::isFaked()) {
             Ai::recordPrompt(
-                new QueuedAgentPrompt($agent, $prompt, $attachments, $provider, $model),
+                new QueuedAgentPrompt($this, $prompt, $attachments, $provider, $model),
             );
 
             return new QueuedAgentResponse(new FakePendingDispatch);
         }
 
         return new QueuedAgentResponse(
-            BroadcastAgent::dispatch($agent, $prompt, $channels, $attachments, $provider, $model)
+            BroadcastAgent::dispatch($this, $prompt, $channels, $attachments, $provider, $model)
         );
     }
 
@@ -254,11 +246,54 @@ trait Promptable
     }
 
     /**
+     * Get the tools for the agent.
+     *
+     * @return array<int, object>
+     */
+    protected function getTools(): array
+    {
+        if (method_exists($this, 'tools')) {
+            return $this->tools();
+        }
+
+        return [];
+    }
+
+    /**
+     * Get the combined instructions for the agent, including any skill instructions.
+     */
+    protected function getInstructions(): string
+    {
+        $instructions = '';
+
+        if (method_exists($this, 'instructions')) {
+            $instructions = (string) $this->instructions();
+        }
+
+        if (method_exists($this, 'skillInstructions')) {
+            $this->bootSkillsIfNeeded();
+
+            $skillInstructions = $this->skillInstructions();
+
+            if (! empty($skillInstructions)) {
+                $instructions = empty($instructions)
+                    ? $skillInstructions
+                    : $instructions.PHP_EOL.PHP_EOL.$skillInstructions;
+            }
+        }
+
+        return $instructions;
+    }
+
+    /**
      * Boot the agent skills.
+     *
+     * @deprecated since 0.x — Use the Skillable trait instead.
+     * @see \Laravel\Ai\Skillable::bootSkillsIfNeeded()
      */
     protected function bootSkills(): void
     {
-        // Deprecated: Skills are now handled via SkillAgentDecorator
+        // Deprecated: Skills are now handled via Skillable trait
     }
 
     /**

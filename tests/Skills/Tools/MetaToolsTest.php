@@ -76,7 +76,6 @@ class MetaToolsTest extends TestCase
             name: 'target-skill',
             description: 'Target skill',
             instructions: 'Target instructions',
-            tools: ['some-tool']
         );
 
         $discovery = Mockery::mock(SkillDiscovery::class);

@@ -2,46 +2,38 @@
 
 namespace Tests\Skills;
 
-use Laravel\Ai\Ai;
 use Laravel\Ai\Contracts\Agent;
-use Laravel\Ai\Contracts\HasSkills;
-use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
-use Laravel\Ai\Skills\SkillAgentDecorator;
-use Laravel\Ai\Skills\SkillDiscoveryMode;
+use Laravel\Ai\Skillable;
+use Laravel\Ai\Skills\SkillMode;
 use Laravel\Ai\Skills\SkillRegistry;
 use Mockery;
 use Tests\TestCase;
 
 class PromptableSkillsTest extends TestCase
 {
-    public function test_it_wraps_agent_in_decorator_and_merges_tools_when_prompting()
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
+    }
+
+    public function test_it_appends_skill_instructions_when_prompting()
     {
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('test-skill')->once();
-        $registry->shouldReceive('tools')->andReturn(['tool_from_skill']);
-        $registry->shouldReceive('instructions')->with('full')->andReturn('Skill instructions');
-        $registry->shouldReceive('getLoaded')->andReturn(['test-skill' => 'dummy']);
+        $registry->shouldReceive('load')->with('test-skill', SkillMode::Full)->once();
+        $registry->shouldReceive('instructions')->with(null)->andReturn('Skill instructions');
 
         $this->app->instance(SkillRegistry::class, $registry);
 
-        $agent = new class implements Agent, HasSkills, HasTools
+        $agent = new class implements Agent
         {
-            use Promptable;
+            use Promptable, Skillable;
 
             public function skills(): iterable
             {
-                return ['test-skill'];
-            }
-
-            public function skillDiscoveryMode(): SkillDiscoveryMode
-            {
-                return SkillDiscoveryMode::Full;
-            }
-
-            public function tools(): iterable
-            {
-                return ['existing_tool'];
+                return ['test-skill' => SkillMode::Full];
             }
 
             public function instructions(): \Illuminate\Support\Stringable|string
@@ -50,44 +42,64 @@ class PromptableSkillsTest extends TestCase
             }
         };
 
-        // Fake the AI to intercept the prompt
         $agent::fake(['response']);
 
         $agent->prompt('hello');
 
         $agent::assertPrompted(function ($prompt) {
-            // The prompt agent MUST be the decorator for this to work
-            return $prompt->agent instanceof SkillAgentDecorator;
+            return str_contains($prompt->instructions, 'Base instructions')
+                && str_contains($prompt->instructions, 'Skill instructions');
         });
     }
 
-    public function test_it_appends_skill_instructions_via_decorator()
+    public function test_get_tools_returns_tools_when_agent_defines_them()
     {
-        $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('test-skill');
-        $registry->shouldReceive('tools')->andReturn([]);
-        $registry->shouldReceive('instructions')->with('full')->andReturn('Skill instructions');
-        $registry->shouldReceive('getLoaded')->andReturn(['test-skill' => 'dummy']);
+        $toolA = new class {};
+        $toolB = new class {};
 
-        $this->app->instance(SkillRegistry::class, $registry);
-
-        $agent = new class implements Agent, HasSkills
+        $agent = new class($toolA, $toolB) implements Agent
         {
             use Promptable;
 
-            public function skills(): iterable
+            private object $toolA;
+
+            private object $toolB;
+
+            public function __construct(object $toolA, object $toolB)
             {
-                return ['test-skill'];
+                $this->toolA = $toolA;
+                $this->toolB = $toolB;
             }
 
-            public function skillDiscoveryMode(): SkillDiscoveryMode
+            public function tools(): array
             {
-                return SkillDiscoveryMode::Full;
+                return [$this->toolA, $this->toolB];
             }
 
-            public function instructions(): \Illuminate\Support\Stringable|string
+            public function instructions(): string
             {
-                return 'Base instructions';
+                return 'Test instructions';
+            }
+        };
+
+        $agent::fake(['response']);
+
+        $agent->prompt('hello');
+
+        $agent::assertPrompted(function ($prompt) use ($toolA, $toolB) {
+            return $prompt->tools === [$toolA, $toolB];
+        });
+    }
+
+    public function test_get_tools_returns_empty_array_when_agent_has_no_tools()
+    {
+        $agent = new class implements Agent
+        {
+            use Promptable;
+
+            public function instructions(): string
+            {
+                return 'No tools agent';
             }
         };
 
@@ -96,7 +108,7 @@ class PromptableSkillsTest extends TestCase
         $agent->prompt('hello');
 
         $agent::assertPrompted(function ($prompt) {
-            return $prompt->agent instanceof SkillAgentDecorator;
+            return $prompt->tools === [];
         });
     }
 }

@@ -5,8 +5,6 @@ version: 1.0.0
 triggers:
   - dummy
   - test
-tools: []
-constraints: []
 ---
 
 # Dummy Skill

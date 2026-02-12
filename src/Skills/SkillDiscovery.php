@@ -10,22 +10,27 @@ class SkillDiscovery
 {
     private const string CACHE_KEY = 'ai_sdk_skills';
 
-    private const int CACHE_TTL = 3600;
-
     public function __construct(
         protected array $paths,
-        protected Repository $cache
+        protected Repository $cache,
+        protected int $ttl = 3600
     ) {}
 
+    /**
+     * Discover all available skills, using cache when possible.
+     */
     public function discover(): Collection
     {
         return $this->cache->remember(
             self::CACHE_KEY,
-            self::CACHE_TTL,
+            $this->ttl,
             fn () => $this->scanLocal()
         );
     }
 
+    /**
+     * Invalidate the cache and re-discover all skills.
+     */
     public function fresh(): Collection
     {
         $this->cache->forget(self::CACHE_KEY);
@@ -33,11 +38,17 @@ class SkillDiscovery
         return $this->discover();
     }
 
+    /**
+     * Resolve a single skill by its name.
+     */
     public function resolve(string $name): ?Skill
     {
         return $this->discover()->first(fn (Skill $skill) => $skill->name === $name);
     }
 
+    /**
+     * Scan the local filesystem for skill definitions.
+     */
     protected function scanLocal(): Collection
     {
         $skills = collect();

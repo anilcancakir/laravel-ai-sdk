@@ -30,7 +30,8 @@ class AiServiceProvider extends ServiceProvider
         $this->app->scoped(SkillDiscovery::class, function ($app) {
             return new SkillDiscovery(
                 config('ai.skills.paths', [resource_path('skills')]),
-                $app['cache']->store(config('ai.skills.cache'))
+                $app['cache']->store(config('ai.skills.cache')),
+                config('ai.skills.cache_ttl', 3600)
             );
         });
 

@@ -45,9 +45,6 @@ trait InteractsWithFakeAgents
     public function hasFakeGatewayFor(Agent|string $agent): bool
     {
         if (is_object($agent)) {
-            while ($agent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
-                $agent = $agent->agent();
-            }
             $agent = $agent::class;
         }
 
@@ -62,15 +59,9 @@ trait InteractsWithFakeAgents
      */
     public function fakeGatewayFor(Agent $agent): FakeTextGateway
     {
-        // Unwrap decoration if needed
-        $originalAgent = $agent;
-        while ($originalAgent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
-            $originalAgent = $originalAgent->agent();
-        }
-
-        return $this->hasFakeGatewayFor($originalAgent)
-            ? $this->fakeAgentGateways[$originalAgent::class]
-            : throw new InvalidArgumentException('Agent ['.$originalAgent::class.'] has not been faked.');
+        return $this->hasFakeGatewayFor($agent)
+            ? $this->fakeAgentGateways[$agent::class]
+            : throw new InvalidArgumentException('Agent ['.$agent::class.'] has not been faked.');
     }
 
     /**
@@ -79,11 +70,6 @@ trait InteractsWithFakeAgents
     public function recordPrompt(AgentPrompt|QueuedAgentPrompt $prompt): self
     {
         $agent = $prompt->agent;
-
-        // Unwrap decorators to find the real agent class
-        while ($agent instanceof \Laravel\Ai\Skills\SkillAgentDecorator) {
-            $agent = $agent->agent();
-        }
 
         $agentClass = $agent::class;
 
@@ -105,10 +91,6 @@ trait InteractsWithFakeAgents
         ?array $prompts = null,
         ?string $message = null): self
     {
-        // Debugging: dump recorded prompts if assertions fail?
-        // No, let's just make sure we are looking at the right key.
-        // $agent passed here is the class string from static::class in Promptable trait.
-
         $callback = is_string($callback)
             ? fn ($prompt) => $prompt->prompt === $callback
             : $callback;

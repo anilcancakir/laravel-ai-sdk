@@ -3,10 +3,14 @@
 namespace Laravel\Ai\Skills;
 
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 class SkillParser
 {
+    /**
+     * Parse a skill definition from its raw Markdown content.
+     */
     public static function parse(string $content, string $source = 'local', ?string $basePath = null): ?Skill
     {
         if (! str_starts_with($content, '---')) {
@@ -25,7 +29,7 @@ class SkillParser
 
         try {
             $frontmatter = Yaml::parse($parts[1]);
-        } catch (\Exception $e) {
+        } catch (ParseException $e) {
             Log::warning('Failed to parse skill frontmatter: '.$e->getMessage());
 
             return null;
@@ -43,7 +47,6 @@ class SkillParser
             name: $frontmatter['name'],
             description: $frontmatter['description'],
             instructions: $body,
-            tools: $frontmatter['tools'] ?? [],
             triggers: $frontmatter['triggers'] ?? [],
             version: $frontmatter['version'] ?? null,
             constraints: $frontmatter['constraints'] ?? [],
