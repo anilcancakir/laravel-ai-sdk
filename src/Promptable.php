@@ -255,7 +255,15 @@ trait Promptable
         if (method_exists($this, 'tools')) {
             $tools = $this->tools();
 
-            return $tools instanceof \Traversable ? iterator_to_array($tools) : (array) $tools;
+            $tools = $tools instanceof \Traversable ? iterator_to_array($tools) : (array) $tools;
+
+            foreach ($tools as $tool) {
+                if (! $tool instanceof \Laravel\Ai\Contracts\Tool) {
+                    throw new \InvalidArgumentException('Tools must implement the Laravel\Ai\Contracts\Tool interface.');
+                }
+            }
+
+            return $tools;
         }
 
         return [];

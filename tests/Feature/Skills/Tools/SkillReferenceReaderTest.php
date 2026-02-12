@@ -16,7 +16,7 @@ class SkillReferenceReaderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tempPath = __DIR__.'/_fixtures';
+        $this->tempPath = sys_get_temp_dir().'/ai_sdk_test_'.uniqid();
         if (! is_dir($this->tempPath)) {
             mkdir($this->tempPath);
         }

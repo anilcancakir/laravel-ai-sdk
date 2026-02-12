@@ -14,27 +14,28 @@ use Orchestra\Testbench\TestCase;
 
 class MetaToolsTest extends TestCase
 {
+    private string $tempPath;
+
     protected function setUp(): void
     {
         parent::setUp();
+        
+        $this->tempPath = sys_get_temp_dir().'/ai_sdk_test_'.uniqid();
 
-        if (! is_dir(__DIR__.'/_fixtures')) {
-            mkdir(__DIR__.'/_fixtures', 0777, true);
+        if (! is_dir($this->tempPath)) {
+            mkdir($this->tempPath, 0777, true);
         }
 
-        file_put_contents(__DIR__.'/_fixtures/test.txt', 'secret content');
-        file_put_contents(__DIR__.'/outside.txt', 'forbidden content');
+        file_put_contents($this->tempPath.'/test.txt', 'secret content');
+        file_put_contents($this->tempPath.'/outside.txt', 'forbidden content');
     }
 
     protected function tearDown(): void
     {
-        if (is_dir(__DIR__.'/_fixtures')) {
-            File::deleteDirectory(__DIR__.'/_fixtures');
+        if (is_dir($this->tempPath)) {
+            File::deleteDirectory($this->tempPath);
         }
-        if (file_exists(__DIR__.'/outside.txt')) {
-            unlink(__DIR__.'/outside.txt');
-        }
-
+        
         Mockery::close();
         parent::tearDown();
     }
@@ -113,7 +114,7 @@ class MetaToolsTest extends TestCase
             name: 'fs-skill',
             description: 'FS Skill',
             instructions: '...',
-            basePath: __DIR__.'/_fixtures'
+            basePath: $this->tempPath
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
@@ -135,7 +136,7 @@ class MetaToolsTest extends TestCase
             name: 'fs-skill',
             description: 'FS Skill',
             instructions: '...',
-            basePath: __DIR__.'/_fixtures'
+            basePath: $this->tempPath
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
@@ -157,7 +158,7 @@ class MetaToolsTest extends TestCase
             name: 'fs-skill',
             description: 'FS Skill',
             instructions: '...',
-            basePath: __DIR__.'/_fixtures'
+            basePath: $this->tempPath
         );
 
         $registry = Mockery::mock(SkillRegistry::class);

@@ -54,8 +54,50 @@ class PromptableSkillsTest extends TestCase
 
     public function test_get_tools_returns_tools_when_agent_defines_them()
     {
-        $toolA = new class {};
-        $toolB = new class {};
+        $toolA = new class implements \Laravel\Ai\Contracts\Tool
+        {
+            public function name(): string
+            {
+                return 'tool_a';
+            }
+
+            public function description(): string
+            {
+                return 'Tool A';
+            }
+
+            public function handle(\Laravel\Ai\Tools\Request $request): string
+            {
+                return 'result';
+            }
+
+            public function schema(\Illuminate\Contracts\JsonSchema\JsonSchema $schema): array
+            {
+                return [];
+            }
+        };
+        $toolB = new class implements \Laravel\Ai\Contracts\Tool
+        {
+            public function name(): string
+            {
+                return 'tool_b';
+            }
+
+            public function description(): string
+            {
+                return 'Tool B';
+            }
+
+            public function handle(\Laravel\Ai\Tools\Request $request): string
+            {
+                return 'result';
+            }
+
+            public function schema(\Illuminate\Contracts\JsonSchema\JsonSchema $schema): array
+            {
+                return [];
+            }
+        };
 
         $agent = new class($toolA, $toolB) implements Agent
         {

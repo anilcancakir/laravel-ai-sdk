@@ -15,7 +15,7 @@ class SkillDiscoveryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tempPath = __DIR__.'/../temp_skills';
+        $this->tempPath = sys_get_temp_dir().'/ai_sdk_test_'.uniqid();
         File::makeDirectory($this->tempPath, 0755, true, true);
     }
 
