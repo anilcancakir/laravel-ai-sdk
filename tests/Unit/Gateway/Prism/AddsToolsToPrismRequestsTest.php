@@ -147,7 +147,7 @@ class AddsToolsToPrismRequestsTest extends TestCase
                 $this->toolInvokedCallback = fn () => null;
             }
 
-            public function test_invoke_tool(Tool $tool, array $arguments): string
+            public function testInvokeTool(Tool $tool, array $arguments): string
             {
                 return $this->invokeTool($tool, $arguments);
             }
