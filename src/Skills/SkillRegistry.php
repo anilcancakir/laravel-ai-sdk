@@ -29,7 +29,9 @@ class SkillRegistry
      */
     public function load(string $name, SkillMode|string|null $mode = null): ?Skill
     {
-        if ($skill = $this->discovery->resolve($name)) {
+        $skill = $this->discovery->resolve($name);
+
+        if ($skill) {
             $this->skills[$skill->name] = $skill;
 
             if ($mode) {
@@ -88,7 +90,7 @@ class SkillRegistry
                 if ($skillMode === SkillMode::Full) {
                     return sprintf(
                         '<skill name="%s">%s%s%s</skill>',
-                        $skill->name,
+                        htmlspecialchars($skill->name, ENT_QUOTES | ENT_XML1),
                         PHP_EOL,
                         $skill->instructions,
                         PHP_EOL
@@ -98,8 +100,8 @@ class SkillRegistry
                 if ($skillMode === SkillMode::Lite) {
                     return sprintf(
                         '<skill name="%s" description="%s" />',
-                        $skill->name,
-                        $skill->description
+                        htmlspecialchars($skill->name, ENT_QUOTES | ENT_XML1),
+                        htmlspecialchars($skill->description, ENT_QUOTES | ENT_XML1)
                     );
                 }
 

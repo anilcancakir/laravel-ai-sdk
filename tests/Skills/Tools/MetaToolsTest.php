@@ -81,7 +81,7 @@ class MetaToolsTest extends TestCase
 
         $registry = Mockery::mock(SkillRegistry::class);
         $registry->shouldReceive('load')
-            ->with('target-skill')
+            ->with('target-skill', Mockery::any())
             ->andReturn($skill);
 
         $tool = new SkillLoader($registry);
@@ -97,7 +97,7 @@ class MetaToolsTest extends TestCase
     {
         $registry = Mockery::mock(SkillRegistry::class);
         $registry->shouldReceive('load')
-            ->with('missing-skill')
+            ->with('missing-skill', Mockery::any())
             ->andReturn(null);
 
         $tool = new SkillLoader($registry);

@@ -7,7 +7,7 @@ use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Skills\Tools\SkillReferenceReader;
 use Laravel\Ai\Tools\Request;
 use Mockery;
-use Tests\TestCase;
+use Orchestra\Testbench\TestCase;
 
 class SkillReferenceReaderTest extends TestCase
 {
@@ -16,95 +16,87 @@ class SkillReferenceReaderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->tempPath = sys_get_temp_dir().'/skill-ref-reader-test-'.uniqid();
-        mkdir($this->tempPath, 0777, true);
+        $this->tempPath = __DIR__.'/_fixtures';
+        if (! is_dir($this->tempPath)) {
+            mkdir($this->tempPath);
+        }
+        file_put_contents($this->tempPath.'/test.txt', 'Test content');
     }
 
     protected function tearDown(): void
     {
         if (is_dir($this->tempPath)) {
-            array_map('unlink', glob($this->tempPath.'/*'));
+            array_map('unlink', glob("$this->tempPath/*.*"));
             rmdir($this->tempPath);
         }
-
         Mockery::close();
         parent::tearDown();
     }
 
     public function test_reads_valid_file_within_skill_directory(): void
     {
-        file_put_contents($this->tempPath.'/guide.md', '# Guide Content');
-
         $skill = new Skill(
-            name: 'my-skill',
-            description: 'Test skill',
+            name: 'valid-skill',
+            description: 'Valid',
             instructions: 'Instructions',
             basePath: $this->tempPath,
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('get')->with('my-skill')->andReturn($skill);
+        $registry->shouldReceive('get')->with('valid-skill')->andReturn($skill);
 
         $tool = new SkillReferenceReader($registry);
 
         $result = $tool->handle(new Request([
-            'skill' => 'my-skill',
-            'file' => 'guide.md',
+            'skill' => 'valid-skill',
+            'file' => 'test.txt',
         ]));
 
-        $this->assertSame('# Guide Content', (string) $result);
+        $this->assertSame('Test content', (string) $result);
     }
 
     public function test_blocks_directory_traversal(): void
     {
-        file_put_contents($this->tempPath.'/legit.txt', 'ok');
-
-        $outsidePath = sys_get_temp_dir().'/outside-skill-'.uniqid().'.txt';
-        file_put_contents($outsidePath, 'forbidden');
-
         $skill = new Skill(
-            name: 'traversal-skill',
-            description: 'Test',
+            name: 'valid-skill',
+            description: 'Valid',
             instructions: 'Instructions',
             basePath: $this->tempPath,
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('get')->with('traversal-skill')->andReturn($skill);
+        $registry->shouldReceive('get')->with('valid-skill')->andReturn($skill);
 
         $tool = new SkillReferenceReader($registry);
 
         $result = $tool->handle(new Request([
-            'skill' => 'traversal-skill',
-            'file' => '../../'.basename($outsidePath),
+            'skill' => 'valid-skill',
+            'file' => '../outside.txt',
         ]));
 
         $this->assertStringContainsString('Access denied', (string) $result);
-
-        @unlink($outsidePath);
     }
 
     public function test_returns_error_for_unloaded_skill(): void
     {
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('get')->with('ghost-skill')->andReturn(null);
+        $registry->shouldReceive('get')->with('unknown-skill')->andReturn(null);
 
         $tool = new SkillReferenceReader($registry);
 
         $result = $tool->handle(new Request([
-            'skill' => 'ghost-skill',
-            'file' => 'anything.md',
+            'skill' => 'unknown-skill',
+            'file' => 'test.txt',
         ]));
 
-        $this->assertStringContainsString("Skill 'ghost-skill' not loaded", (string) $result);
+        $this->assertStringContainsString('Skill \'unknown-skill\' not loaded', (string) $result);
     }
 
     public function test_returns_error_for_skill_without_base_path(): void
     {
         $skill = new Skill(
             name: 'no-path-skill',
-            description: 'No path',
+            description: 'No Path',
             instructions: 'Instructions',
             basePath: null,
         );
@@ -116,7 +108,7 @@ class SkillReferenceReaderTest extends TestCase
 
         $result = $tool->handle(new Request([
             'skill' => 'no-path-skill',
-            'file' => 'guide.md',
+            'file' => 'test.txt',
         ]));
 
         $this->assertStringContainsString('does not have a base path', (string) $result);
@@ -138,9 +130,33 @@ class SkillReferenceReaderTest extends TestCase
 
         $result = $tool->handle(new Request([
             'skill' => 'valid-skill',
-            'file' => 'nonexistent.md',
+            'file' => 'does_not_exist.txt',
         ]));
 
         $this->assertStringContainsString('not found', (string) $result);
+    }
+
+    public function test_blocks_reading_non_reference_files(): void
+    {
+        // Use .log extension which is not in the allowed list (md, txt, yaml, yml, json)
+        file_put_contents($this->tempPath.'/secret.log', 'Log content');
+
+        $skill = new Skill(
+            name: 'valid-skill',
+            description: 'Valid',
+            instructions: 'Instructions',
+            basePath: $this->tempPath,
+        );
+
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('get')->with('valid-skill')->andReturn($skill);
+
+        $tool = new SkillReferenceReader($registry);
+
+        $result = $tool->handle(new Request([
+            'skill' => 'valid-skill',
+            'file' => 'secret.log',
+        ]));
+        $this->assertStringContainsString('not in the allowed reference files list', (string) $result);
     }
 }

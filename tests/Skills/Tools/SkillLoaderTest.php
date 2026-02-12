@@ -25,7 +25,7 @@ class SkillLoaderTest extends TestCase
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('git-master')->once()->andReturn($skill);
+        $registry->shouldReceive('load')->with('git-master', Mockery::any())->once()->andReturn($skill);
 
         $tool = new SkillLoader($registry);
 
@@ -54,7 +54,7 @@ class SkillLoaderTest extends TestCase
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('my-skill')->once()->andReturn($skill);
+        $registry->shouldReceive('load')->with('my-skill', Mockery::any())->once()->andReturn($skill);
 
         $tool = new SkillLoader($registry);
 
@@ -79,7 +79,7 @@ class SkillLoaderTest extends TestCase
         );
 
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('simple-skill')->once()->andReturn($skill);
+        $registry->shouldReceive('load')->with('simple-skill', Mockery::any())->once()->andReturn($skill);
 
         $tool = new SkillLoader($registry);
 
@@ -94,7 +94,7 @@ class SkillLoaderTest extends TestCase
     public function test_handle_returns_not_found_for_unknown_skill(): void
     {
         $registry = Mockery::mock(SkillRegistry::class);
-        $registry->shouldReceive('load')->with('nonexistent')->once()->andReturn(null);
+        $registry->shouldReceive('load')->with('nonexistent', Mockery::any())->once()->andReturn(null);
 
         $tool = new SkillLoader($registry);
 

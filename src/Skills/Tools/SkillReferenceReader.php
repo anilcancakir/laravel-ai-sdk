@@ -35,8 +35,8 @@ class SkillReferenceReader implements Tool
 
     public function handle(Request $request): Stringable|string
     {
-        $skillName = $request['skill'];
-        $fileName = $request['file'];
+        $skillName = (string) $request->string('skill');
+        $fileName = (string) $request->string('file');
 
         $skill = $this->registry->get($skillName);
 
@@ -59,11 +59,22 @@ class SkillReferenceReader implements Tool
             return sprintf("File '%s' not found in skill directory.", $fileName);
         }
 
+        // Whitelist check: Ensure file is in allowed reference files
+        if (! in_array($fileName, $skill->referenceFiles(), true)) {
+             return sprintf("File '%s' is not in the allowed reference files list.", $fileName);
+        }
+
         $path = realpath($filePath);
         $basePath = realpath($skill->basePath);
 
-        // Double-check resolved path stays within skill directory
-        if (! $path || ! $basePath || ! str_starts_with($path, $basePath)) {
+        // Double-check resolved path stays within skill directory (with trailing slash)
+        if (! $path || ! $basePath) {
+             return 'Access denied: Cannot read outside skill directory.';
+        }
+        
+        $basePath = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+        if (! str_starts_with($path, $basePath)) {
             return 'Access denied: Cannot read outside skill directory.';
         }
 
@@ -79,18 +90,12 @@ class SkillReferenceReader implements Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'type' => 'object',
-            'properties' => [
-                'skill' => [
-                    'type' => 'string',
-                    'description' => 'The name of the skill',
-                ],
-                'file' => [
-                    'type' => 'string',
-                    'description' => 'The relative path to the file within the skill directory',
-                ],
-            ],
-            'required' => ['skill', 'file'],
+            'skill' => $schema->string()
+                ->description('The name of the skill')
+                ->required(),
+            'file' => $schema->string()
+                ->description('The relative path to the file within the skill directory')
+                ->required(),
         ];
     }
 }

@@ -5,67 +5,87 @@ namespace Laravel\Ai\Skills\Tools;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Stringable;
 use Laravel\Ai\Contracts\Tool;
+use Laravel\Ai\Skills\SkillMode;
 use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Tools\Request;
 
 class SkillLoader implements Tool
 {
+    /**
+     * Create a new tool instance.
+     */
     public function __construct(
         protected SkillRegistry $registry
     ) {}
 
+    /**
+     * Get the name of the tool.
+     */
     public function name(): string
     {
         return 'skill_load';
     }
 
+    /**
+     * Get the description of the tool.
+     */
     public function description(): Stringable|string
     {
-        return 'Loads a skill by name to make its tools available.';
+        return 'Load a skill into the conversation context.';
     }
 
+    /**
+     * Run the tool.
+     *
+     * @param  \Laravel\Ai\Tools\Request  $request
+     * @return \Illuminate\Support\Stringable|string
+     */
     public function handle(Request $request): Stringable|string
     {
-        $name = $request['skill'];
+        $name = (string) $request->string('skill');
 
-        $skill = $this->registry->load($name);
+        $skill = $this->registry->load($name, SkillMode::Full);
 
         if (! $skill) {
-            return sprintf("Skill '%s' not found.", $name);
+            return "Skill '{$name}' not found.";
         }
 
-        $referenceFiles = $skill->referenceFiles();
+        $references = '';
+        $files = $skill->referenceFiles();
 
-        $output = sprintf('<skill name="%s">', $skill->name).PHP_EOL;
-        $output .= '<instructions>'.PHP_EOL;
-        $output .= $skill->instructions.PHP_EOL;
-        $output .= '</instructions>'.PHP_EOL;
+        if (! empty($files)) {
+            $fileList = implode(', ', $files);
+            $references = <<<XML
 
-        if ($referenceFiles !== []) {
-            $fileList = implode(', ', $referenceFiles);
-
-            $output .= '<skill_references>'.PHP_EOL;
-            $output .= sprintf('Available files: %s', $fileList).PHP_EOL;
-            $output .= sprintf('Use the `skill_read` tool with skill="%s" and file="<filename>" to read these.', $skill->name).PHP_EOL;
-            $output .= '</skill_references>'.PHP_EOL;
+<skill_references>
+Available files: $fileList
+Use the `skill_read` tool with skill="{$skill->name}" and file="<filename>" to read these.
+</skill_references>
+XML;
         }
 
-        $output .= '</skill>';
-
-        return $output;
+        // Return XML structured output
+        return <<<XML
+<skill name="{$skill->name}">
+<instructions>
+{$skill->instructions}
+</instructions>$references
+</skill>
+XML;
     }
 
+    /**
+     * Get the parameter schema for the tool.
+     *
+     * @param  \Illuminate\Contracts\JsonSchema\JsonSchema  $schema
+     * @return array<string, mixed>
+     */
     public function schema(JsonSchema $schema): array
     {
         return [
-            'type' => 'object',
-            'properties' => [
-                'skill' => [
-                    'type' => 'string',
-                    'description' => 'The name of the skill to load',
-                ],
-            ],
-            'required' => ['skill'],
+            'skill' => $schema->string()
+                ->description('The name of the skill to load')
+                ->required(),
         ];
     }
 }
