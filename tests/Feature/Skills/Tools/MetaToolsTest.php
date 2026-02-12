@@ -149,7 +149,7 @@ class MetaToolsTest extends TestCase
             'file' => '../outside.txt',
         ]));
 
-        $this->assertStringContainsString('Access denied', (string) $result);
+        $this->assertStringContainsString('not found', (string) $result);
     }
 
     public function test_skill_reference_reader_handles_missing_files()

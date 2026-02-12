@@ -47,6 +47,8 @@ class SkillLoader implements Tool
             return "Skill '{$name}' not found.";
         }
 
+        $escapedName = htmlspecialchars($skill->name, ENT_QUOTES | ENT_XML1);
+
         $references = '';
         $files = $skill->referenceFiles();
 
@@ -56,13 +58,13 @@ class SkillLoader implements Tool
 
 <skill_references>
 Available files: $fileList
-Use the `skill_read` tool with skill="{$skill->name}" and file="<filename>" to read these.
+Use the `skill_read` tool with skill="{$escapedName}" and file="<filename>" to read these.
 </skill_references>
 XML;
         }
 
         return <<<XML
-<skill name="{$skill->name}">
+<skill name="{$escapedName}">
 <instructions>
 {$skill->instructions}
 </instructions>$references

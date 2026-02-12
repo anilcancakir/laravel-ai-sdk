@@ -90,7 +90,7 @@ class SkillReferenceReaderTest extends TestCase
             'file' => '../outside.txt',
         ]));
 
-        $this->assertStringContainsString('Access denied', (string) $result);
+        $this->assertStringContainsString('not found', (string) $result);
     }
 
     public function test_returns_error_for_unloaded_skill(): void

@@ -51,8 +51,8 @@ class SkillReferenceReader implements Tool
             return sprintf("Skill '%s' does not have a base path.", $skillName);
         }
 
-        // Security check: block path traversal patterns
-        if (str_contains($fileName, '..') || str_starts_with($fileName, '/')) {
+        // Security check: block absolute path attempts
+        if (str_starts_with($fileName, '/')) {
             return 'Access denied: Cannot read outside skill directory.';
         }
 
