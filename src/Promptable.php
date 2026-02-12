@@ -286,17 +286,6 @@ trait Promptable
     }
 
     /**
-     * Boot the agent skills.
-     *
-     * @deprecated since 0.x — Use the Skillable trait instead.
-     * @see \Laravel\Ai\Skillable::bootSkillsIfNeeded()
-     */
-    protected function bootSkills(): void
-    {
-        // Deprecated: Skills are now handled via Skillable trait
-    }
-
-    /**
      * Fake the responses returned by the agent.
      */
     public static function fake(Closure|array $responses = []): FakeTextGateway

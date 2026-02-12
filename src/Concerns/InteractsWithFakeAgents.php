@@ -44,12 +44,8 @@ trait InteractsWithFakeAgents
      */
     public function hasFakeGatewayFor(Agent|string $agent): bool
     {
-        if (is_object($agent)) {
-            $agent = $agent::class;
-        }
-
         return array_key_exists(
-            $agent,
+            is_object($agent) ? $agent::class : $agent,
             $this->fakeAgentGateways
         );
     }
@@ -69,14 +65,10 @@ trait InteractsWithFakeAgents
      */
     public function recordPrompt(AgentPrompt|QueuedAgentPrompt $prompt): self
     {
-        $agent = $prompt->agent;
-
-        $agentClass = $agent::class;
-
         if ($prompt instanceof QueuedAgentPrompt) {
-            $this->recordedQueuedPrompts[$agentClass][] = $prompt;
+            $this->recordedQueuedPrompts[$prompt->agent::class][] = $prompt;
         } else {
-            $this->recordedPrompts[$agentClass][] = $prompt;
+            $this->recordedPrompts[$prompt->agent::class][] = $prompt;
         }
 
         return $this;
@@ -95,11 +87,8 @@ trait InteractsWithFakeAgents
             ? fn ($prompt) => $prompt->prompt === $callback
             : $callback;
 
-        $recorded = $prompts ?? $this->recordedPrompts[$agent] ?? [];
-
         PHPUnit::assertTrue(
-
-            (new Collection($recorded))->contains(function ($prompt) use ($callback) {
+            (new Collection($prompts ?? $this->recordedPrompts[$agent] ?? []))->contains(function ($prompt) use ($callback) {
                 return $callback($prompt);
             }),
             $message ?? 'An expected prompt was not received.'
