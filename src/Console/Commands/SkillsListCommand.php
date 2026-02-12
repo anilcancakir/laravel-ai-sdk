@@ -27,7 +27,7 @@ class SkillsListCommand extends Command
      */
     public function handle(SkillDiscovery $discovery): int
     {
-        $skills = $discovery->fresh();
+        $skills = $discovery->discover();
 
         if ($skills->isEmpty()) {
             $this->info('No skills found.');

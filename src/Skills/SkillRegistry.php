@@ -9,14 +9,14 @@ class SkillRegistry
     /**
      * The loaded skills.
      *
-     * @var array<string, \Laravel\Ai\Skills\Skill>
+     * @var array<string, Skill>
      */
     protected array $skills = [];
 
     /**
      * The modes for the loaded skills.
      *
-     * @var array<string, \Laravel\Ai\Skills\SkillMode>
+     * @var array<string, SkillMode>
      */
     protected array $skillModes = [];
 

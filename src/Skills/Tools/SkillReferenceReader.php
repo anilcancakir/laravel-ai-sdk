@@ -33,6 +33,9 @@ class SkillReferenceReader implements Tool
         return 'Reads a file from a skill\'s directory.';
     }
 
+    /**
+     * Run the tool.
+     */
     public function handle(Request $request): Stringable|string
     {
         $skillName = (string) $request->string('skill');
@@ -61,7 +64,7 @@ class SkillReferenceReader implements Tool
 
         // Whitelist check: Ensure file is in allowed reference files
         if (! in_array($fileName, $skill->referenceFiles(), true)) {
-             return sprintf("File '%s' is not in the allowed reference files list.", $fileName);
+            return sprintf("File '%s' is not in the allowed reference files list.", $fileName);
         }
 
         $path = realpath($filePath);
@@ -69,9 +72,9 @@ class SkillReferenceReader implements Tool
 
         // Double-check resolved path stays within skill directory (with trailing slash)
         if (! $path || ! $basePath) {
-             return 'Access denied: Cannot read outside skill directory.';
+            return 'Access denied: Cannot read outside skill directory.';
         }
-        
+
         $basePath = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
         if (! str_starts_with($path, $basePath)) {
@@ -87,6 +90,11 @@ class SkillReferenceReader implements Tool
         return $content;
     }
 
+    /**
+     * Get the parameter schema for the tool.
+     *
+     * @return array<string, mixed>
+     */
     public function schema(JsonSchema $schema): array
     {
         return [

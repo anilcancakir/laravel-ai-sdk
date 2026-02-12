@@ -40,10 +40,10 @@ final readonly class Skill
 
         $finder = (new Finder)
             ->files()
+            ->followLinks()
             ->in($this->basePath)
             ->name(['*.md', '*.txt', '*.yaml', '*.yml', '*.json'])
-            ->notName('SKILL.md')
-            ->depth('== 0');
+            ->notName('SKILL.md');
 
         return collect($finder)
             ->map(fn (SplFileInfo $file) => $file->getRelativePathname())

@@ -70,9 +70,6 @@ Always respond with "Test Successful".
 EOT;
         File::put($skillPath, $skillContent);
 
-        // Clear cache so the new skill is discovered
-        $this->app->make(\Laravel\Ai\Skills\SkillDiscovery::class)->fresh();
-
         // 2. Fake the AI response
         TestSkillAgent::fake([
             'Test Successful',

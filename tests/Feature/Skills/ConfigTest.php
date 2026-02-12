@@ -21,7 +21,5 @@ class ConfigTest extends TestCase
         $this->assertEquals('lite', config('ai.skills.default_mode'));
         $this->assertIsArray(config('ai.skills.paths'));
         $this->assertContains(resource_path('skills'), config('ai.skills.paths'));
-        $this->assertNull(config('ai.skills.cache'));
-        $this->assertSame(3600, config('ai.skills.cache_ttl'));
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Skills;
 
 use Laravel\Ai\Skills\SkillMode;
 use PHPUnit\Framework\TestCase;
+use ValueError;
 
 class SkillModeTest extends TestCase
 {
@@ -35,7 +36,7 @@ class SkillModeTest extends TestCase
 
     public function test_from_value_throws_exception_for_invalid_value(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
         SkillMode::fromValue('invalid');
     }
 }

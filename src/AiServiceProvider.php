@@ -10,7 +10,6 @@ use Laravel\Ai\Console\Commands\ChatCommand;
 use Laravel\Ai\Console\Commands\MakeAgentCommand;
 use Laravel\Ai\Console\Commands\MakeSkillCommand;
 use Laravel\Ai\Console\Commands\MakeToolCommand;
-use Laravel\Ai\Console\Commands\SkillsClearCommand;
 use Laravel\Ai\Console\Commands\SkillsListCommand;
 use Laravel\Ai\Contracts\ConversationStore;
 use Laravel\Ai\Skills\SkillDiscovery;
@@ -31,9 +30,7 @@ class AiServiceProvider extends ServiceProvider
 
         $this->app->scoped(SkillDiscovery::class, function ($app) {
             return new SkillDiscovery(
-                config('ai.skills.paths', [resource_path('skills')]),
-                $app['cache']->store(config('ai.skills.cache')),
-                config('ai.skills.cache_ttl', 3600)
+                config('ai.skills.paths', [resource_path('skills')])
             );
         });
 
@@ -112,7 +109,6 @@ class AiServiceProvider extends ServiceProvider
             MakeAgentCommand::class,
             MakeSkillCommand::class,
             MakeToolCommand::class,
-            SkillsClearCommand::class,
             SkillsListCommand::class,
         ]);
     }

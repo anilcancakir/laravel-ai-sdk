@@ -36,9 +36,6 @@ class SkillLoader implements Tool
 
     /**
      * Run the tool.
-     *
-     * @param  \Laravel\Ai\Tools\Request  $request
-     * @return \Illuminate\Support\Stringable|string
      */
     public function handle(Request $request): Stringable|string
     {
@@ -64,7 +61,6 @@ Use the `skill_read` tool with skill="{$skill->name}" and file="<filename>" to r
 XML;
         }
 
-        // Return XML structured output
         return <<<XML
 <skill name="{$skill->name}">
 <instructions>
@@ -77,7 +73,6 @@ XML;
     /**
      * Get the parameter schema for the tool.
      *
-     * @param  \Illuminate\Contracts\JsonSchema\JsonSchema  $schema
      * @return array<string, mixed>
      */
     public function schema(JsonSchema $schema): array

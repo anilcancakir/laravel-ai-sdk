@@ -2,50 +2,26 @@
 
 namespace Laravel\Ai\Skills;
 
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 
 class SkillDiscovery
 {
     /**
-     * The cache key for storing discovered skills.
-     *
-     * @var string
-     */
-    public const string CACHE_KEY = 'ai_sdk_skills';
-
-    /**
      * Create a new skill discovery instance.
      *
      * @param  array<int, string>  $paths
      */
     public function __construct(
-        protected array $paths,
-        protected Repository $cache,
-        protected int $ttl = 3600
+        protected array $paths
     ) {}
 
     /**
-     * Discover all available skills, using cache when possible.
+     * Discover all available skills from configured paths.
      */
     public function discover(): Collection
     {
-        return $this->cache->remember(
-            self::CACHE_KEY,
-            $this->ttl,
-            fn () => $this->scanLocal()
-        );
-    }
-
-    /**
-     * Invalidate the cache and re-discover all skills.
-     */
-    public function fresh(): Collection
-    {
-        $this->cache->forget(self::CACHE_KEY);
-
-        return $this->discover();
+        return $this->scanLocal();
     }
 
     /**
@@ -75,6 +51,7 @@ class SkillDiscovery
 
         $finder = new Finder;
         $finder->files()
+            ->followLinks()
             ->in($existingPaths)
             ->name('SKILL.md')
             ->depth('== 1');

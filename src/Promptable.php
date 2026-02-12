@@ -252,21 +252,25 @@ trait Promptable
      */
     protected function getTools(): array
     {
+        $tools = [];
+
         if (method_exists($this, 'tools')) {
             $tools = $this->tools();
 
             $tools = $tools instanceof \Traversable ? iterator_to_array($tools) : (array) $tools;
-
-            foreach ($tools as $tool) {
-                if (! $tool instanceof \Laravel\Ai\Contracts\Tool) {
-                    throw new \InvalidArgumentException('Tools must implement the Laravel\Ai\Contracts\Tool interface.');
-                }
-            }
-
-            return $tools;
         }
 
-        return [];
+        if (method_exists($this, 'skillTools')) {
+            $tools = array_merge($tools, $this->skillTools());
+        }
+
+        foreach ($tools as $tool) {
+            if (! $tool instanceof \Laravel\Ai\Contracts\Tool) {
+                throw new \InvalidArgumentException('Tools must implement the Laravel\Ai\Contracts\Tool interface.');
+            }
+        }
+
+        return $tools;
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Skills;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Laravel\Ai\Skills\Skill;
 use Laravel\Ai\Skills\SkillDiscovery;
@@ -38,7 +37,7 @@ Test instructions
 MD
         );
 
-        $discovery = new SkillDiscovery([$this->tempPath], Cache::store('array'));
+        $discovery = new SkillDiscovery([$this->tempPath]);
         $skills = $discovery->discover();
 
         $this->assertCount(1, $skills);
@@ -46,31 +45,7 @@ MD
         $this->assertEquals('Test Skill', $skills->first()->name);
     }
 
-    public function test_it_caches_discovered_skills()
-    {
-        $skillDir = $this->tempPath.'/test-skill';
-        File::makeDirectory($skillDir);
-        File::put($skillDir.'/SKILL.md', '---
-name: Cached Skill
-description: Description
----
-Body');
-
-        $cache = Cache::store('array');
-        $discovery = new SkillDiscovery([$this->tempPath], $cache);
-
-        $discovery->discover();
-        $this->assertTrue($cache->has('ai_sdk_skills'));
-
-        File::deleteDirectory($skillDir);
-
-        $skills = $discovery->discover();
-
-        $this->assertCount(1, $skills);
-        $this->assertEquals('Cached Skill', $skills->first()->name);
-    }
-
-    public function test_fresh_bypasses_cache()
+    public function test_it_rescans_on_every_discover_call()
     {
         $skillDir = $this->tempPath.'/test-skill';
         File::makeDirectory($skillDir);
@@ -80,10 +55,9 @@ description: Description
 ---
 Body');
 
-        $cache = Cache::store('array');
-        $discovery = new SkillDiscovery([$this->tempPath], $cache);
+        $discovery = new SkillDiscovery([$this->tempPath]);
 
-        $discovery->discover();
+        $this->assertEquals('Initial Skill', $discovery->discover()->first()->name);
 
         File::put($skillDir.'/SKILL.md', '---
 name: Updated Skill
@@ -91,9 +65,7 @@ description: Description
 ---
 Body');
 
-        $this->assertEquals('Initial Skill', $discovery->discover()->first()->name);
-
-        $this->assertEquals('Updated Skill', $discovery->fresh()->first()->name);
+        $this->assertEquals('Updated Skill', $discovery->discover()->first()->name);
     }
 
     public function test_resolve_finds_skill_by_name()
@@ -106,7 +78,7 @@ description: Description
 ---
 Body');
 
-        $discovery = new SkillDiscovery([$this->tempPath], Cache::store('array'));
+        $discovery = new SkillDiscovery([$this->tempPath]);
 
         $skill = $discovery->resolve('Target Skill');
         $this->assertNotNull($skill);
@@ -117,27 +89,32 @@ Body');
 
     public function test_returns_empty_collection_for_empty_paths()
     {
-        $discovery = new SkillDiscovery([], Cache::store('array'));
+        $discovery = new SkillDiscovery([]);
 
         $this->assertTrue($discovery->discover()->isEmpty());
     }
 
-    public function test_it_accepts_custom_cache_ttl()
+    public function test_it_follows_symlinks_when_discovering_skills()
     {
-        $skillDir = $this->tempPath.'/ttl-skill';
-        File::makeDirectory($skillDir);
-        File::put($skillDir.'/SKILL.md', '---
-name: TTL Skill
-description: Description
+        $targetDir = $this->tempPath.'/actual-skill';
+        File::makeDirectory($targetDir);
+        File::put($targetDir.'/SKILL.md', '---
+name: Symlinked Skill
+description: A symlinked skill
 ---
-Body');
+Instructions');
 
-        $cache = Cache::store('array');
-        $discovery = new SkillDiscovery([$this->tempPath], $cache, 60);
+        $linksDir = sys_get_temp_dir().'/ai_sdk_links_'.uniqid();
+        File::makeDirectory($linksDir);
+        symlink($targetDir, $linksDir.'/linked-skill');
 
+        $discovery = new SkillDiscovery([$linksDir]);
         $skills = $discovery->discover();
 
         $this->assertCount(1, $skills);
-        $this->assertTrue($cache->has('ai_sdk_skills'));
+        $this->assertEquals('Symlinked Skill', $skills->first()->name);
+
+        unlink($linksDir.'/linked-skill');
+        File::deleteDirectory($linksDir);
     }
 }

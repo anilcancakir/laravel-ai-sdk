@@ -6,13 +6,12 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Stringable;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Skills\SkillRegistry;
+use Laravel\Ai\Tools\Request;
 
 class ListSkills implements Tool
 {
     /**
      * The memoized description of the tool.
-     *
-     * @var string|null
      */
     private ?string $memoizedDescription = null;
 
@@ -59,11 +58,8 @@ XML;
 
     /**
      * Run the tool.
-     *
-     * @param  \Laravel\Ai\Tools\Request  $request
-     * @return \Illuminate\Support\Stringable|string
      */
-    public function handle($request): Stringable|string
+    public function handle(Request $request): Stringable|string
     {
         $skills = $this->registry->discover();
 
@@ -72,12 +68,12 @@ XML;
         }
 
         $header = "| Name | Description | Source | Status |\n|---|---|---|---|\n";
-        
+
         $rows = $skills->map(function ($skill) {
             $status = $this->registry->isLoaded($skill->name) ? 'Loaded' : 'Available';
-            
+
             return sprintf(
-                "| %s | %s | %s | %s |",
+                '| %s | %s | %s | %s |',
                 $skill->name,
                 $skill->description,
                 $skill->source,
@@ -85,13 +81,12 @@ XML;
             );
         })->implode("\n");
 
-        return $header . $rows;
+        return $header.$rows;
     }
 
     /**
      * Get the parameter schema for the tool.
      *
-     * @param  \Illuminate\Contracts\JsonSchema\JsonSchema  $schema
      * @return array<string, mixed>
      */
     public function schema(JsonSchema $schema): array

@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Skills\Tools;
 
+use FilesystemIterator;
 use Laravel\Ai\Skills\Skill;
 use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Skills\Tools\SkillReferenceReader;
 use Laravel\Ai\Tools\Request;
 use Mockery;
 use Orchestra\Testbench\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class SkillReferenceReaderTest extends TestCase
 {
@@ -26,11 +29,24 @@ class SkillReferenceReaderTest extends TestCase
     protected function tearDown(): void
     {
         if (is_dir($this->tempPath)) {
-            array_map('unlink', glob("$this->tempPath/*.*"));
-            rmdir($this->tempPath);
+            $this->deleteDirectory($this->tempPath);
         }
         Mockery::close();
         parent::tearDown();
+    }
+
+    private function deleteDirectory(string $dir): void
+    {
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($items as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+
+        rmdir($dir);
     }
 
     public function test_reads_valid_file_within_skill_directory(): void
@@ -158,5 +174,30 @@ class SkillReferenceReaderTest extends TestCase
             'file' => 'secret.log',
         ]));
         $this->assertStringContainsString('not in the allowed reference files list', (string) $result);
+    }
+
+    public function test_reads_files_from_subdirectories(): void
+    {
+        mkdir($this->tempPath.'/references');
+        file_put_contents($this->tempPath.'/references/utilities.md', 'Utility reference content');
+
+        $skill = new Skill(
+            name: 'valid-skill',
+            description: 'Valid',
+            instructions: 'Instructions',
+            basePath: $this->tempPath,
+        );
+
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('get')->with('valid-skill')->andReturn($skill);
+
+        $tool = new SkillReferenceReader($registry);
+
+        $result = $tool->handle(new Request([
+            'skill' => 'valid-skill',
+            'file' => 'references/utilities.md',
+        ]));
+
+        $this->assertSame('Utility reference content', (string) $result);
     }
 }

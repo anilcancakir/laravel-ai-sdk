@@ -2,11 +2,15 @@
 
 namespace Tests\Feature\Skills;
 
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Stringable;
 use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Promptable;
 use Laravel\Ai\Skillable;
 use Laravel\Ai\Skills\SkillMode;
 use Laravel\Ai\Skills\SkillRegistry;
+use Laravel\Ai\Tools\Request;
 use Mockery;
 use Tests\TestCase;
 
@@ -36,7 +40,7 @@ class PromptableSkillsTest extends TestCase
                 return ['test-skill' => SkillMode::Full];
             }
 
-            public function instructions(): \Illuminate\Support\Stringable|string
+            public function instructions(): Stringable|string
             {
                 return 'Base instructions';
             }
@@ -54,7 +58,7 @@ class PromptableSkillsTest extends TestCase
 
     public function test_get_tools_returns_tools_when_agent_defines_them()
     {
-        $toolA = new class implements \Laravel\Ai\Contracts\Tool
+        $toolA = new class implements Tool
         {
             public function name(): string
             {
@@ -66,17 +70,17 @@ class PromptableSkillsTest extends TestCase
                 return 'Tool A';
             }
 
-            public function handle(\Laravel\Ai\Tools\Request $request): string
+            public function handle(Request $request): string
             {
                 return 'result';
             }
 
-            public function schema(\Illuminate\Contracts\JsonSchema\JsonSchema $schema): array
+            public function schema(JsonSchema $schema): array
             {
                 return [];
             }
         };
-        $toolB = new class implements \Laravel\Ai\Contracts\Tool
+        $toolB = new class implements Tool
         {
             public function name(): string
             {
@@ -88,12 +92,12 @@ class PromptableSkillsTest extends TestCase
                 return 'Tool B';
             }
 
-            public function handle(\Laravel\Ai\Tools\Request $request): string
+            public function handle(Request $request): string
             {
                 return 'result';
             }
 
-            public function schema(\Illuminate\Contracts\JsonSchema\JsonSchema $schema): array
+            public function schema(JsonSchema $schema): array
             {
                 return [];
             }
@@ -151,6 +155,47 @@ class PromptableSkillsTest extends TestCase
 
         $agent::assertPrompted(function ($prompt) {
             return $prompt->tools === [];
+        });
+    }
+
+    public function test_get_tools_merges_skill_tools_with_agent_tools()
+    {
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('load')->once();
+        $registry->shouldReceive('instructions')->with(null)->andReturn('');
+
+        $this->app->instance(SkillRegistry::class, $registry);
+
+        $agent = new class implements Agent
+        {
+            use Promptable, Skillable;
+
+            public function skills(): iterable
+            {
+                return ['test-skill' => SkillMode::Full];
+            }
+
+            public function tools(): iterable
+            {
+                return [];
+            }
+
+            public function instructions(): string
+            {
+                return 'Test';
+            }
+        };
+
+        $agent::fake(['response']);
+
+        $agent->prompt('hello');
+
+        $agent::assertPrompted(function ($prompt) {
+            $toolNames = array_map(fn ($t) => $t->name(), $prompt->tools);
+
+            return in_array('skill_list', $toolNames)
+                && in_array('skill_load', $toolNames)
+                && in_array('skill_read', $toolNames);
         });
     }
 }

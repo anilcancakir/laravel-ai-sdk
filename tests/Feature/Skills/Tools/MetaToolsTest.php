@@ -19,7 +19,7 @@ class MetaToolsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->tempPath = sys_get_temp_dir().'/ai_sdk_test_'.uniqid();
 
         if (! is_dir($this->tempPath)) {
@@ -35,7 +35,7 @@ class MetaToolsTest extends TestCase
         if (is_dir($this->tempPath)) {
             File::deleteDirectory($this->tempPath);
         }
-        
+
         Mockery::close();
         parent::tearDown();
     }

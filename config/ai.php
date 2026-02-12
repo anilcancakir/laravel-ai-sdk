@@ -134,8 +134,6 @@ return [
         'paths' => [
             resource_path('skills'),
         ],
-        'cache' => null,
-        'cache_ttl' => 3600,
     ],
 
 ];
