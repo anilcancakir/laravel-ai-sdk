@@ -125,7 +125,7 @@ return [
     | Below you may configure your AI skills. Skills are atomic units of
     | functionality that can be used by AI agents to perform tasks.
     |
-    | Supported Modes: "lite", "full"
+    | Supported Modes: "none", "lite", "full"
     |
     */
 

@@ -35,7 +35,7 @@ class AiServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(SkillRegistry::class, function ($app) {
+        $this->app->scoped(SkillRegistry::class, function ($app) {
             return new SkillRegistry($app->make(SkillDiscovery::class));
         });
 

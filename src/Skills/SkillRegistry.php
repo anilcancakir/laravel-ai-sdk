@@ -26,10 +26,10 @@ class SkillRegistry
     public function load(string $name, SkillMode|string|null $mode = null): ?Skill
     {
         if ($skill = $this->discovery->resolve($name)) {
-            $this->skills[$name] = $skill;
+            $this->skills[$skill->name] = $skill;
 
             if ($mode) {
-                $this->skillModes[$name] = $mode instanceof SkillMode ? $mode : SkillMode::fromValue($mode);
+                $this->skillModes[$skill->name] = $mode instanceof SkillMode ? $mode : SkillMode::fromValue($mode);
             }
         }
 
@@ -65,7 +65,7 @@ class SkillRegistry
      */
     public function discover(): Collection
     {
-        return $this->discovery->fresh();
+        return $this->discovery->discover();
     }
 
     /**

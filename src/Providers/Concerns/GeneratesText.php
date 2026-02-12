@@ -12,7 +12,6 @@ use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\ConversationStore;
 use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasStructuredOutput;
-use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Events\AgentPrompted;
 use Laravel\Ai\Events\InvokingTool;
@@ -61,7 +60,7 @@ trait GeneratesText
                     $prompt->model,
                     $prompt->instructions ?? (string) $agent->instructions(),
                     $messages,
-                    $agent instanceof HasTools ? array_merge($agent->tools(), $prompt->tools) : $prompt->tools,
+                    $prompt->tools,
                     $agent instanceof HasStructuredOutput ? $agent->schema(new JsonSchemaTypeFactory) : null,
                     TextGenerationOptions::forAgent($agent),
                     $prompt->timeout,

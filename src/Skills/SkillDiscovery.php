@@ -57,9 +57,15 @@ class SkillDiscovery
             return $skills;
         }
 
+        $existingPaths = array_filter($this->paths, 'is_dir');
+
+        if (empty($existingPaths)) {
+            return $skills;
+        }
+
         $finder = new Finder;
         $finder->files()
-            ->in($this->paths)
+            ->in($existingPaths)
             ->name('SKILL.md')
             ->depth('== 1');
 

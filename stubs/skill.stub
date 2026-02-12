@@ -1,12 +1,11 @@
 ---
-name: Dummy Skill
-description: A dummy skill for testing.
+name: {{ name }}
+description: A skill for {{ slug }}.
 version: 1.0.0
 triggers:
-  - dummy
-  - test
+  - {{ slug }}
 ---
 
-# Dummy Skill
+# {{ name }}
 
-This is a dummy skill body.
+Write the skill instructions here.

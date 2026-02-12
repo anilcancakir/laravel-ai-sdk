@@ -253,7 +253,9 @@ trait Promptable
     protected function getTools(): array
     {
         if (method_exists($this, 'tools')) {
-            return $this->tools();
+            $tools = $this->tools();
+
+            return $tools instanceof \Traversable ? iterator_to_array($tools) : (array) $tools;
         }
 
         return [];
@@ -271,7 +273,9 @@ trait Promptable
         }
 
         if (method_exists($this, 'skillInstructions')) {
-            $this->bootSkillsIfNeeded();
+            if (method_exists($this, 'bootSkillsIfNeeded')) {
+                $this->bootSkillsIfNeeded();
+            }
 
             $skillInstructions = $this->skillInstructions();
 

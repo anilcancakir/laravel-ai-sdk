@@ -44,8 +44,8 @@ class MakeSkillCommand extends Command
         $stub = File::get(__DIR__.'/../../../stubs/skill.stub');
 
         $content = str_replace(
-            ['Dummy Skill', 'dummy-skill', 'test-skill', 'name: Dummy Skill'],
-            [Str::headline($name), $name, $name, "name: {$name}"],
+            ['{{ name }}', '{{ slug }}'],
+            [Str::headline($name), $name],
             $stub
         );
 

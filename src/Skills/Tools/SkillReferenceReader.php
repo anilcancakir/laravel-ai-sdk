@@ -34,18 +34,25 @@ class SkillReferenceReader implements Tool
             return sprintf("Skill '%s' does not have a base path.", $skillName);
         }
 
-        if (! file_exists($skill->basePath.'/'.$fileName)) {
-            return sprintf("File '%s' not found in skill directory.", $fileName);
-        }
-
         $path = realpath($skill->basePath.'/'.$fileName);
+        $basePath = realpath($skill->basePath);
 
-        // Security check: Ensure the resolved path starts with the skill's base path
-        if (! $path || ! str_starts_with($path, realpath($skill->basePath))) {
+        // Security check: Ensure the resolved path exists and stays within the skill's base path
+        if (! $path || ! $basePath || ! str_starts_with($path, $basePath)) {
             return 'Access denied: Cannot read outside skill directory.';
         }
 
-        return file_get_contents($path);
+        if (! file_exists($path)) {
+            return sprintf("File '%s' not found in skill directory.", $fileName);
+        }
+
+        $content = file_get_contents($path);
+
+        if ($content === false) {
+            return sprintf("Failed to read file '%s'.", $fileName);
+        }
+
+        return $content;
     }
 
     public function schema(JsonSchema $schema): array
