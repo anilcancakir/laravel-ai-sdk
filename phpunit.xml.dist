@@ -8,9 +8,6 @@
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
-        <testsuite name="Skills">
-            <directory suffix="Test.php">./tests/Skills</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>

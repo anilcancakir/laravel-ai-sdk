@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills;
+namespace Tests\Feature\Skills;
 
 use Laravel\Ai\Skillable;
 use Laravel\Ai\Skills\Skill;

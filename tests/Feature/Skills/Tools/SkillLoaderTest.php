@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills\Tools;
+namespace Tests\Feature\Skills\Tools;
 
 use Laravel\Ai\Skills\Skill;
 use Laravel\Ai\Skills\SkillRegistry;

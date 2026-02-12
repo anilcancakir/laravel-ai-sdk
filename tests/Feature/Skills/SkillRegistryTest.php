@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills;
+namespace Tests\Feature\Skills;
 
 use Laravel\Ai\Skills\Skill;
 use Laravel\Ai\Skills\SkillMode;

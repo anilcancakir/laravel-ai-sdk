@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills;
+namespace Tests\Feature\Skills;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills;
+namespace Tests\Feature\Skills;
 
 use Orchestra\Testbench\TestCase;
 
@@ -13,7 +13,7 @@ class ConfigTest extends TestCase
 
     protected function defineEnvironment($app)
     {
-        $app['config']->set('ai', require __DIR__.'/../../config/ai.php');
+        $app['config']->set('ai', require __DIR__.'/../../../config/ai.php');
     }
 
     public function test_config_values_are_retrievable()

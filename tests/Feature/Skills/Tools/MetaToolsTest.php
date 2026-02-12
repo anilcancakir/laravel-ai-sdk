@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Skills\Tools;
+namespace Tests\Feature\Skills\Tools;
 
 use Illuminate\Support\Facades\File;
 use Laravel\Ai\Skills\Skill;
