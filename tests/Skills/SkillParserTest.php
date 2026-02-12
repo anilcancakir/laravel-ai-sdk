@@ -13,10 +13,6 @@ class SkillParserTest extends TestCase
 ---
 name: my-skill
 description: A useful skill
-triggers: [weather, forecast]
-version: 1.0.0
-constraints:
-  os: macos
 ---
 # Instructions
 Do something.
@@ -27,9 +23,6 @@ MD;
         $this->assertNotNull($skill);
         $this->assertSame('my-skill', $skill->name);
         $this->assertSame('A useful skill', $skill->description);
-        $this->assertSame(['weather', 'forecast'], $skill->triggers);
-        $this->assertSame('1.0.0', $skill->version);
-        $this->assertSame(['os' => 'macos'], $skill->constraints);
         $this->assertSame('remote', $skill->source);
         $this->assertSame('/base', $skill->basePath);
         $this->assertSame('# Instructions'.PHP_EOL.'Do something.', $skill->instructions);
@@ -71,7 +64,7 @@ MD;
         $this->assertNull(SkillParser::parse($markdown));
     }
 
-    public function test_handles_optional_fields()
+    public function test_handles_minimal_frontmatter()
     {
         $markdown = <<<'MD'
 ---
@@ -84,9 +77,10 @@ MD;
         $skill = SkillParser::parse($markdown);
 
         $this->assertNotNull($skill);
-        $this->assertSame([], $skill->triggers);
-        $this->assertNull($skill->version);
-        $this->assertSame([], $skill->constraints);
+        $this->assertSame('simple', $skill->name);
+        $this->assertSame('simple desc', $skill->description);
+        $this->assertSame('local', $skill->source);
+        $this->assertNull($skill->basePath);
     }
 
     public function test_preserves_markdown_instructions()

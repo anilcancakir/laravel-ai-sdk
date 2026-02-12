@@ -4,6 +4,9 @@ namespace Laravel\Ai;
 
 use Laravel\Ai\Skills\SkillMode;
 use Laravel\Ai\Skills\SkillRegistry;
+use Laravel\Ai\Skills\Tools\ListSkills;
+use Laravel\Ai\Skills\Tools\SkillLoader;
+use Laravel\Ai\Skills\Tools\SkillReferenceReader;
 
 trait Skillable
 {
@@ -25,6 +28,22 @@ trait Skillable
         $this->bootSkillsIfNeeded();
 
         return $this->skillRegistry->instructions($mode);
+    }
+
+    /**
+     * Get the meta-tools for skill management.
+     *
+     * @return array<int, object>
+     */
+    public function skillTools(): array
+    {
+        $this->bootSkillsIfNeeded();
+
+        return [
+            app(ListSkills::class),
+            app(SkillLoader::class),
+            app(SkillReferenceReader::class),
+        ];
     }
 
     /**

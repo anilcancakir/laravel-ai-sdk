@@ -3,20 +3,15 @@
 namespace Laravel\Ai\Skills;
 
 use Illuminate\Support\Str;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 final readonly class Skill
 {
-    /**
-     * @param  array<string>  $triggers
-     * @param  array<string, mixed>  $constraints
-     */
     public function __construct(
         public string $name,
         public string $description,
         public string $instructions,
-        public array $triggers = [],
-        public ?string $version = null,
-        public array $constraints = [],
         public string $source = 'local',
         public ?string $basePath = null,
     ) {}
@@ -30,13 +25,26 @@ final readonly class Skill
     }
 
     /**
-     * Determine if the given input matches any of the skill's triggers.
+     * Get the reference files available in the skill's base directory.
+     *
+     * @return array<int, string>
      */
-    public function matchesTrigger(string $input): bool
+    public function referenceFiles(): array
     {
-        return Str::contains(
-            Str::lower($input),
-            array_map(fn ($t) => Str::lower($t), $this->triggers)
-        );
+        if (! $this->basePath || ! is_dir($this->basePath)) {
+            return [];
+        }
+
+        $finder = (new Finder)
+            ->files()
+            ->in($this->basePath)
+            ->name(['*.md', '*.txt', '*.yaml', '*.yml', '*.json'])
+            ->notName('SKILL.md')
+            ->depth('== 0');
+
+        return collect($finder)
+            ->map(fn (SplFileInfo $file) => $file->getRelativePathname())
+            ->values()
+            ->all();
     }
 }

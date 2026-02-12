@@ -4,7 +4,6 @@ namespace Tests\Skills\Tools;
 
 use Illuminate\Support\Facades\File;
 use Laravel\Ai\Skills\Skill;
-use Laravel\Ai\Skills\SkillDiscovery;
 use Laravel\Ai\Skills\SkillRegistry;
 use Laravel\Ai\Skills\Tools\ListSkills;
 use Laravel\Ai\Skills\Tools\SkillLoader;
@@ -42,8 +41,7 @@ class MetaToolsTest extends TestCase
 
     public function test_list_skills_returns_all_available_skills()
     {
-        $discovery = Mockery::mock(SkillDiscovery::class);
-        $discovery->shouldReceive('fresh')->andReturn(collect([
+        $skills = collect([
             new Skill(
                 name: 'test-skill',
                 description: 'A test skill',
@@ -56,9 +54,12 @@ class MetaToolsTest extends TestCase
                 instructions: 'Do other things',
                 source: 'community'
             ),
-        ]));
+        ]);
 
-        $registry = new SkillRegistry($discovery);
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('discover')->andReturn($skills);
+        $registry->shouldReceive('isLoaded')->andReturn(false);
+
         $tool = new ListSkills($registry);
 
         $result = $tool->handle(new Request([]));
@@ -78,28 +79,27 @@ class MetaToolsTest extends TestCase
             instructions: 'Target instructions',
         );
 
-        $discovery = Mockery::mock(SkillDiscovery::class);
-        $discovery->shouldReceive('resolve')
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('load')
             ->with('target-skill')
             ->andReturn($skill);
 
-        $registry = new SkillRegistry($discovery);
         $tool = new SkillLoader($registry);
 
         $result = $tool->handle(new Request(['skill' => 'target-skill']));
 
-        $this->assertTrue($registry->isLoaded('target-skill'));
+        $this->assertStringContainsString('<skill name="target-skill">', (string) $result);
         $this->assertStringContainsString('Target instructions', (string) $result);
+        $this->assertStringContainsString('<instructions>', (string) $result);
     }
 
     public function test_skill_loader_returns_error_if_skill_not_found()
     {
-        $discovery = Mockery::mock(SkillDiscovery::class);
-        $discovery->shouldReceive('resolve')
+        $registry = Mockery::mock(SkillRegistry::class);
+        $registry->shouldReceive('load')
             ->with('missing-skill')
             ->andReturn(null);
 
-        $registry = new SkillRegistry($discovery);
         $tool = new SkillLoader($registry);
 
         $result = $tool->handle(new Request(['skill' => 'missing-skill']));
@@ -116,7 +116,6 @@ class MetaToolsTest extends TestCase
             basePath: __DIR__.'/_fixtures'
         );
 
-        $discovery = Mockery::mock(SkillDiscovery::class);
         $registry = Mockery::mock(SkillRegistry::class);
         $registry->shouldReceive('get')->with('fs-skill')->andReturn($skill);
 

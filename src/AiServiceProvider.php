@@ -10,6 +10,8 @@ use Laravel\Ai\Console\Commands\ChatCommand;
 use Laravel\Ai\Console\Commands\MakeAgentCommand;
 use Laravel\Ai\Console\Commands\MakeSkillCommand;
 use Laravel\Ai\Console\Commands\MakeToolCommand;
+use Laravel\Ai\Console\Commands\SkillsClearCommand;
+use Laravel\Ai\Console\Commands\SkillsListCommand;
 use Laravel\Ai\Contracts\ConversationStore;
 use Laravel\Ai\Skills\SkillDiscovery;
 use Laravel\Ai\Skills\SkillRegistry;
@@ -110,6 +112,8 @@ class AiServiceProvider extends ServiceProvider
             MakeAgentCommand::class,
             MakeSkillCommand::class,
             MakeToolCommand::class,
+            SkillsClearCommand::class,
+            SkillsListCommand::class,
         ]);
     }
 

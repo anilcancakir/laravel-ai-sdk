@@ -18,23 +18,59 @@ class SkillTest extends TestCase
         $this->assertSame('my-coding-skill', $skill->slug());
     }
 
-    public function test_skill_matches_trigger()
-    {
-        $skill = new Skill(
-            name: 'Skill',
-            description: 'Desc',
-            instructions: 'Inst',
-            triggers: ['coding', 'developer']
-        );
-
-        $this->assertTrue($skill->matchesTrigger('I love coding'));
-        $this->assertTrue($skill->matchesTrigger('developer tasks'));
-        $this->assertTrue($skill->matchesTrigger('CODING'));
-        $this->assertFalse($skill->matchesTrigger('testing'));
-    }
-
     public function test_skill_is_immutable()
     {
         $this->assertTrue((new \ReflectionClass(Skill::class))->isReadOnly());
+    }
+
+    public function test_reference_files_returns_supported_files_excluding_skill_md()
+    {
+        $tempPath = sys_get_temp_dir().'/skill-ref-test-'.uniqid();
+        mkdir($tempPath);
+
+        file_put_contents($tempPath.'/SKILL.md', 'skip');
+        file_put_contents($tempPath.'/guide.md', 'content');
+        file_put_contents($tempPath.'/config.yaml', 'content');
+        file_put_contents($tempPath.'/data.json', 'content');
+        file_put_contents($tempPath.'/notes.txt', 'content');
+        file_put_contents($tempPath.'/image.png', 'content');
+
+        $skill = new Skill(
+            name: 'test',
+            description: 'd',
+            instructions: 'i',
+            basePath: $tempPath
+        );
+
+        $files = $skill->referenceFiles();
+
+        $this->assertContains('guide.md', $files);
+        $this->assertContains('config.yaml', $files);
+        $this->assertContains('data.json', $files);
+        $this->assertContains('notes.txt', $files);
+        $this->assertNotContains('SKILL.md', $files);
+        $this->assertNotContains('image.png', $files);
+
+        array_map('unlink', glob($tempPath.'/*'));
+        rmdir($tempPath);
+    }
+
+    public function test_reference_files_returns_empty_when_no_base_path()
+    {
+        $skill = new Skill(name: 'test', description: 'd', instructions: 'i');
+
+        $this->assertSame([], $skill->referenceFiles());
+    }
+
+    public function test_reference_files_returns_empty_when_directory_missing()
+    {
+        $skill = new Skill(
+            name: 'test',
+            description: 'd',
+            instructions: 'i',
+            basePath: '/nonexistent/path/'.uniqid()
+        );
+
+        $this->assertSame([], $skill->referenceFiles());
     }
 }

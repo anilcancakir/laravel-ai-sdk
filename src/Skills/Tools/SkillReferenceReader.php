@@ -34,16 +34,23 @@ class SkillReferenceReader implements Tool
             return sprintf("Skill '%s' does not have a base path.", $skillName);
         }
 
-        $path = realpath($skill->basePath.'/'.$fileName);
-        $basePath = realpath($skill->basePath);
-
-        // Security check: Ensure the resolved path exists and stays within the skill's base path
-        if (! $path || ! $basePath || ! str_starts_with($path, $basePath)) {
+        // Security check: block path traversal patterns
+        if (str_contains($fileName, '..') || str_starts_with($fileName, '/')) {
             return 'Access denied: Cannot read outside skill directory.';
         }
 
-        if (! file_exists($path)) {
+        $filePath = $skill->basePath.'/'.$fileName;
+
+        if (! file_exists($filePath)) {
             return sprintf("File '%s' not found in skill directory.", $fileName);
+        }
+
+        $path = realpath($filePath);
+        $basePath = realpath($skill->basePath);
+
+        // Double-check resolved path stays within skill directory
+        if (! $path || ! $basePath || ! str_starts_with($path, $basePath)) {
+            return 'Access denied: Cannot read outside skill directory.';
         }
 
         $content = file_get_contents($path);

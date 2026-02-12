@@ -14,6 +14,11 @@ class SkillLoader implements Tool
         protected SkillRegistry $registry
     ) {}
 
+    public function name(): string
+    {
+        return 'skill_load';
+    }
+
     public function description(): Stringable|string
     {
         return 'Loads a skill by name to make its tools available.';
@@ -29,11 +34,25 @@ class SkillLoader implements Tool
             return sprintf("Skill '%s' not found.", $name);
         }
 
-        return sprintf(
-            "Loaded skill '%s'.\n\nInstructions:\n%s",
-            $skill->name,
-            $skill->instructions
-        );
+        $referenceFiles = $skill->referenceFiles();
+
+        $output = sprintf('<skill name="%s">', $skill->name).PHP_EOL;
+        $output .= '<instructions>'.PHP_EOL;
+        $output .= $skill->instructions.PHP_EOL;
+        $output .= '</instructions>'.PHP_EOL;
+
+        if ($referenceFiles !== []) {
+            $fileList = implode(', ', $referenceFiles);
+
+            $output .= '<skill_references>'.PHP_EOL;
+            $output .= sprintf('Available files: %s', $fileList).PHP_EOL;
+            $output .= sprintf('Use the `skill_read` tool with skill="%s" and file="<filename>" to read these.', $skill->name).PHP_EOL;
+            $output .= '</skill_references>'.PHP_EOL;
+        }
+
+        $output .= '</skill>';
+
+        return $output;
     }
 
     public function schema(JsonSchema $schema): array

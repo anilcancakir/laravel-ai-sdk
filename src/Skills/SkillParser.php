@@ -47,9 +47,6 @@ class SkillParser
             name: $frontmatter['name'],
             description: $frontmatter['description'],
             instructions: $body,
-            triggers: $frontmatter['triggers'] ?? [],
-            version: $frontmatter['version'] ?? null,
-            constraints: $frontmatter['constraints'] ?? [],
             source: $source,
             basePath: $basePath,
         );

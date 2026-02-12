@@ -1,9 +1,6 @@
 ---
 name: {{ name }}
 description: A skill for {{ slug }}.
-version: 1.0.0
-triggers:
-  - {{ slug }}
 ---
 
 # {{ name }}
