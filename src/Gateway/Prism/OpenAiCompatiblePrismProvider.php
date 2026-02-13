@@ -2,10 +2,16 @@
 
 namespace Laravel\Ai\Gateway\Prism;
 
+use Generator;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\PendingRequest;
 use Prism\Prism\PrismManager;
 use Prism\Prism\Providers\Groq\Groq;
+use Prism\Prism\Streaming\Events\StreamEvent;
+use Prism\Prism\Structured\Request as StructuredRequest;
+use Prism\Prism\Structured\Response as StructuredResponse;
+use Prism\Prism\Text\Request as TextRequest;
+use Prism\Prism\Text\Response as TextResponse;
 use Psr\Http\Message\RequestInterface;
 
 class OpenAiCompatiblePrismProvider extends Groq
@@ -14,6 +20,14 @@ class OpenAiCompatiblePrismProvider extends Groq
      * Whether the provider has been registered with PrismManager.
      */
     protected static bool $registered = false;
+
+    /**
+     * Provider options captured from the current request, injected
+     * into the outgoing HTTP body by the request middleware.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $pendingProviderOptions = [];
 
     /**
      * Register this provider with the given PrismManager instance.
@@ -34,6 +48,33 @@ class OpenAiCompatiblePrismProvider extends Groq
         static::$registered = true;
     }
 
+    #[\Override]
+    public function text(TextRequest $request): TextResponse
+    {
+        $this->pendingProviderOptions = $request->providerOptions() ?? [];
+
+        return parent::text($request);
+    }
+
+    /**
+     * @return Generator<StreamEvent>
+     */
+    #[\Override]
+    public function stream(TextRequest $request): Generator
+    {
+        $this->pendingProviderOptions = $request->providerOptions() ?? [];
+
+        return parent::stream($request);
+    }
+
+    #[\Override]
+    public function structured(StructuredRequest $request): StructuredResponse
+    {
+        $this->pendingProviderOptions = $request->providerOptions() ?? [];
+
+        return parent::structured($request);
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -47,9 +88,10 @@ class OpenAiCompatiblePrismProvider extends Groq
      * Sanitize the JSON request body to ensure compatibility with strict
      * OpenAI-compatible APIs (e.g. Gemini/Kodizm proxies).
      *
-     * Handles two concerns:
+     * Handles three concerns:
      * 1. Empty `properties` in tool schemas: `[]` → `{}`
      * 2. Empty `arguments` in tool_calls within messages: `"[]"` → `"{}"`
+     * 3. Injects provider options (e.g. `reasoning_effort`) into the body
      */
     protected function sanitizeRequestBody(RequestInterface $request): RequestInterface
     {
@@ -76,6 +118,8 @@ class OpenAiCompatiblePrismProvider extends Groq
             $data['messages'] = $this->sanitizeMessageToolCalls($data['messages'], $modified);
         }
 
+        $data = $this->injectProviderOptions($data, $modified);
+
         if (! $modified) {
             return $request;
         }
@@ -83,6 +127,28 @@ class OpenAiCompatiblePrismProvider extends Groq
         return $request->withBody(
             Utils::streamFor(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
         );
+    }
+
+    /**
+     * Inject captured provider options into the request body.
+     *
+     * Since Prism's Groq handler does not forward providerOptions to the
+     * HTTP payload, we bridge them here at the middleware layer.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function injectProviderOptions(array $data, bool &$modified): array
+    {
+        if ($this->pendingProviderOptions === []) {
+            return $data;
+        }
+
+        $data = array_merge($data, $this->pendingProviderOptions);
+        $this->pendingProviderOptions = [];
+        $modified = true;
+
+        return $data;
     }
 
     /**
