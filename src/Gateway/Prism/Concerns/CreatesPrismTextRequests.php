@@ -8,6 +8,7 @@ use Laravel\Ai\ObjectSchema;
 use Laravel\Ai\Providers\AnthropicProvider;
 use Laravel\Ai\Providers\GeminiProvider;
 use Laravel\Ai\Providers\OllamaProvider;
+use Laravel\Ai\Providers\OpenAiCompatibleProvider;
 use Laravel\Ai\Providers\OpenAiProvider;
 use Laravel\Ai\Providers\Provider;
 use Laravel\Ai\Providers\XaiProvider;
@@ -99,6 +100,12 @@ trait CreatesPrismTextRequests
             $request = $request->withProviderOptions([
                 'thinking' => $thinking['enabled'],
             ]);
+        }
+
+        if ($thinking && $provider instanceof OpenAiCompatibleProvider) {
+            $request = $request->withProviderOptions(array_filter([
+                'reasoning_effort' => $thinking['effort'],
+            ]));
         }
 
         if (! is_null($options?->maxTokens)) {
