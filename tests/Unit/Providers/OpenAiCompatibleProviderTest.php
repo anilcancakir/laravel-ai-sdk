@@ -4,6 +4,7 @@ namespace Tests\Unit\Providers;
 
 use Illuminate\Support\Facades\Config;
 use Laravel\Ai\Ai;
+use Laravel\Ai\Gateway\OpenAiCompatibleImageGateway;
 use Laravel\Ai\Providers\OpenAiCompatibleProvider;
 use Tests\TestCase;
 
@@ -77,5 +78,66 @@ class OpenAiCompatibleProviderTest extends TestCase
         $this->assertNotSame($provider1, $provider2);
         $this->assertEquals('model-1', $provider1->defaultTextModel());
         $this->assertEquals('model-2', $provider2->defaultTextModel());
+    }
+
+    public function test_can_resolve_as_image_provider()
+    {
+        Config::set('ai.providers.image-provider', [
+            'driver' => 'openai-compatible',
+            'key' => 'test-key',
+            'url' => 'https://api.example.com/v1',
+        ]);
+
+        $provider = Ai::imageProvider('image-provider');
+
+        $this->assertInstanceOf(OpenAiCompatibleProvider::class, $provider);
+    }
+
+    public function test_uses_configured_image_model()
+    {
+        Config::set('ai.providers.custom-image', [
+            'driver' => 'openai-compatible',
+            'models' => [
+                'image' => 'custom-image-model',
+            ],
+        ]);
+
+        $provider = Ai::imageProvider('custom-image');
+
+        $this->assertEquals('custom-image-model', $provider->defaultImageModel());
+    }
+
+    public function test_uses_fallback_image_model_when_not_configured()
+    {
+        Config::set('ai.providers.fallback-image', [
+            'driver' => 'openai-compatible',
+        ]);
+
+        $provider = Ai::imageProvider('fallback-image');
+
+        $this->assertEquals('dall-e-3', $provider->defaultImageModel());
+    }
+
+    public function test_returns_openai_compatible_image_gateway()
+    {
+        Config::set('ai.providers.gateway-test', [
+            'driver' => 'openai-compatible',
+        ]);
+
+        $provider = Ai::imageProvider('gateway-test');
+
+        $this->assertInstanceOf(OpenAiCompatibleImageGateway::class, $provider->imageGateway());
+    }
+
+    public function test_returns_empty_default_image_options()
+    {
+        Config::set('ai.providers.options-test', [
+            'driver' => 'openai-compatible',
+        ]);
+
+        $provider = Ai::imageProvider('options-test');
+
+        $this->assertEquals([], $provider->defaultImageOptions());
+        $this->assertEquals([], $provider->defaultImageOptions('1:1', 'high'));
     }
 }
