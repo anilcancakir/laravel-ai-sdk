@@ -1,15 +1,23 @@
 {
-    "name": "laravel/ai",
-    "description": "The official AI SDK for Laravel.",
+    "name": "anilcancakir/laravel-ai-sdk-plus",
+    "description": "Laravel AI SDK Plus — A fork of the official Laravel AI SDK enriched with custom features.",
     "license": "MIT",
     "keywords": [
         "laravel",
-        "ai"
+        "ai",
+        "skills",
+        "agents"
     ],
-    "homepage": "https://github.com/laravel/ai",
+    "authors": [
+        {
+            "name": "Anilcan Cakir",
+            "email": "anilcan.cakir@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/anilcancakir/laravel-ai-sdk-plus",
     "support": {
-        "issues": "https://github.com/laravel/ai/issues",
-        "source": "https://github.com/laravel/ai"
+        "issues": "https://github.com/anilcancakir/laravel-ai-sdk-plus/issues",
+        "source": "https://github.com/anilcancakir/laravel-ai-sdk-plus"
     },
     "require": {
         "php": "^8.4",
