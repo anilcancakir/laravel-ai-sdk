@@ -53,7 +53,16 @@ trait Promptable
     {
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->prompt(
-                new AgentPrompt($this, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
+                new AgentPrompt(
+                    $this,
+                    $prompt,
+                    $attachments,
+                    $provider,
+                    $model,
+                    $this->getTimeout($timeout),
+                    $this->getTools(),
+                    $this->getInstructions()
+                )
             ),
             $provider,
             $model,
@@ -72,7 +81,16 @@ trait Promptable
     {
         return $this->withModelFailover(
             fn (Provider $provider, string $model) => $provider->stream(
-                new AgentPrompt($this, $prompt, $attachments, $provider, $model, $this->getTimeout($timeout))
+                new AgentPrompt(
+                    $this,
+                    $prompt,
+                    $attachments,
+                    $provider,
+                    $model,
+                    $this->getTimeout($timeout),
+                    $this->getTools(),
+                    $this->getInstructions()
+                )
             ),
             $provider,
             $model,
@@ -226,6 +244,58 @@ trait Promptable
         }
 
         return 60;
+    }
+
+    /**
+     * Get the tools for the agent.
+     *
+     * @return array<int, object>
+     */
+    protected function getTools(): array
+    {
+        $tools = [];
+
+        if (method_exists($this, 'tools')) {
+            $tools = $this->tools();
+
+            $tools = $tools instanceof \Traversable ? iterator_to_array($tools) : (array) $tools;
+        }
+
+        if (method_exists($this, 'skillTools')) {
+            $tools = array_merge($tools, $this->skillTools());
+        }
+
+        foreach ($tools as $tool) {
+            if (! $tool instanceof \Laravel\Ai\Contracts\Tool) {
+                throw new \InvalidArgumentException('Tools must implement the Laravel\Ai\Contracts\Tool interface.');
+            }
+        }
+
+        return $tools;
+    }
+
+    /**
+     * Get the combined instructions for the agent, including any skill instructions.
+     */
+    protected function getInstructions(): string
+    {
+        $instructions = '';
+
+        if (method_exists($this, 'instructions')) {
+            $instructions = (string) $this->instructions();
+        }
+
+        if (method_exists($this, 'skillInstructions')) {
+            $skillInstructions = $this->skillInstructions();
+
+            if (! empty($skillInstructions)) {
+                $instructions = empty($instructions)
+                    ? $skillInstructions
+                    : $instructions.PHP_EOL.PHP_EOL.$skillInstructions;
+            }
+        }
+
+        return $instructions;
     }
 
     /**
