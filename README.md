@@ -36,6 +36,73 @@ class DesignAgent extends Agent
 
 Support for any OpenAI-compatible API endpoint (LocalAI, Ollama, vLLM, LiteLLM, etc.) as a first-class provider.
 
+```php
+// config/ai.php
+'providers' => [
+    'my-provider' => [
+        'driver' => 'openai-compatible',
+        'key' => env('MY_PROVIDER_API_KEY'),
+        'url' => 'https://api.my-provider.com/v1',
+        'models' => [
+            'default' => 'gpt-4o',
+            'image' => 'image-model',
+        ],
+    ],
+],
+```
+
+#### Text Generation
+
+```php
+use Laravel\Ai\Ai;
+
+$response = Ai::textProvider('my-provider')
+    ->prompt('Explain quantum computing in one sentence.');
+```
+
+#### Image Generation
+
+Generate images through any OpenAI-compatible service that supports image generation via the chat completions endpoint:
+
+```php
+use Laravel\Ai\Image;
+
+// Basic image generation
+$response = Image::of('A cat wearing a top hat')->generate('my-provider');
+
+// Access the generated image
+$response->firstImage()->image; // Base64 content
+$response->firstImage()->mime;  // e.g. 'image/png'
+
+// Save to disk
+$response->store('images', 'public');
+
+// With size and quality options
+Image::of('A futuristic cityscape')
+    ->landscape()
+    ->quality('high')
+    ->generate('my-provider');
+
+// With reference image attachments
+use Laravel\Ai\Files\Image as ImageFile;
+
+Image::of('Make this image more vibrant')
+    ->attachments([
+        ImageFile::fromPath('/path/to/reference.jpg'),
+    ])
+    ->generate('my-provider');
+```
+
+Set a default image provider to skip specifying it every time:
+
+```php
+// config/ai.php
+'default_for_images' => 'my-provider',
+
+// Then simply:
+Image::of('A mountain at dawn')->generate();
+```
+
 ## Documentation
 
 For core SDK documentation, refer to the official [Laravel AI SDK docs](https://laravel.com/docs/ai-sdk).
