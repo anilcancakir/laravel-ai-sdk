@@ -32,6 +32,28 @@ class DesignAgent extends Agent
 }
 ```
 
+### Thinking / Extended Reasoning
+
+Configure thinking/reasoning behavior per agent using the `#[Thinking]` attribute. Works across all major providers with automatic parameter mapping.
+
+```php
+use Laravel\Ai\Attributes\Thinking;
+
+#[Thinking]                        // Enable with defaults
+#[Thinking(effort: 'low')]         // Reasoning effort (OpenAI, Gemini, OpenAI-Compatible)
+#[Thinking(budgetTokens: 10000)]   // Token budget (Anthropic, Gemini)
+#[Thinking(effort: 'high', budgetTokens: 16000)] // Both
+```
+
+| Provider | Parameters |
+|----------|-----------|
+| Anthropic | `thinking.enabled`, `thinking.budgetTokens` |
+| OpenAI | `reasoning.effort` |
+| Gemini | `thinkingBudget`, `thinkingLevel` |
+| xAI | `thinking.enabled` |
+| Ollama | `thinking` |
+| OpenAI-Compatible | `reasoning_effort` |
+
 ### OpenAI-Compatible Provider
 
 Support for any OpenAI-compatible API endpoint (LocalAI, Ollama, vLLM, LiteLLM, etc.) as a first-class provider.
