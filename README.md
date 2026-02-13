@@ -1,31 +1,49 @@
-<p align="center"><img src="/art/logo.svg" alt="Laravel AI SDK Package Logo"></p>
+<p align="center"><img src="/art/logo.svg" alt="Laravel AI SDK Plus"></p>
 
-<p align="center">
-<a href="https://packagist.org/packages/laravel/ai"><img src="https://img.shields.io/packagist/dt/laravel/ai" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/ai"><img src="https://img.shields.io/packagist/v/laravel/ai" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/ai"><img src="https://img.shields.io/packagist/l/laravel/ai" alt="License"></a>
-</p>
+# Laravel AI SDK Plus
 
-## Introduction
+A fork of the official [Laravel AI SDK](https://github.com/laravel/ai) enriched with additional features. This package is kept in sync with the upstream `laravel/ai` repository as closely as possible — all core functionality remains identical.
 
-The Laravel AI SDK provides a unified, expressive API for interacting with AI providers such as OpenAI, Anthropic, Gemini, and more. With the AI SDK, you can build intelligent agents with tools and structured output, generate images, synthesize and transcribe audio, create vector embeddings, and much more — all using a consistent, Laravel-friendly interface.
+## Installation
+
+```bash
+composer require anilcancakir/laravel-ai-sdk-plus
+```
+
+> **Note:** This package replaces `laravel/ai`. You should not have both installed at the same time.
+
+## What's Different?
+
+Everything from the official Laravel AI SDK works exactly the same. This fork adds the following features on top:
+
+### Agent Skills System
+
+A file-based, discoverable system that allows AI agents to dynamically load domain-specific instructions and reference files at runtime. Skills are Markdown files with YAML front matter, placed in `resources/skills/`.
+
+```php
+class DesignAgent extends Agent
+{
+    use Skillable;
+
+    public function skills(): iterable
+    {
+        return ['wind-ui'];
+    }
+}
+```
+
+### OpenAI-Compatible Provider
+
+Support for any OpenAI-compatible API endpoint (LocalAI, Ollama, vLLM, LiteLLM, etc.) as a first-class provider.
 
 ## Documentation
 
-Documentation for the Laravel AI SDK can be found on the [Laravel website](https://laravel.com/docs/ai-sdk).
+For core SDK documentation, refer to the official [Laravel AI SDK docs](https://laravel.com/docs/ai-sdk).
 
-## Contributing
+## Upstream Sync
 
-Thank you for considering contributing to Laravel! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-Please review [our security policy](https://github.com/laravel/ai/security/policy) on how to report security vulnerabilities.
+This fork tracks the `0.x` branch of `laravel/ai`. Upstream changes are merged regularly to stay current with the official release.
 
 ## License
 
-The Laravel AI SDK is open-sourced software licensed under the [MIT license](LICENSE.md).
+Laravel AI SDK Plus is open-sourced software licensed under the [MIT license](LICENSE.md).
