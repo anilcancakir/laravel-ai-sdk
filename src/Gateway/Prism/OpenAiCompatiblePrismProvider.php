@@ -5,6 +5,7 @@ namespace Laravel\Ai\Gateway\Prism;
 use Generator;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\PendingRequest;
+use Override;
 use Prism\Prism\PrismManager;
 use Prism\Prism\Providers\Groq\Groq;
 use Prism\Prism\Streaming\Events\StreamEvent;
@@ -48,7 +49,7 @@ class OpenAiCompatiblePrismProvider extends Groq
         static::$registered = true;
     }
 
-    #[\Override]
+    #[Override]
     public function text(TextRequest $request): TextResponse
     {
         $this->pendingProviderOptions = $request->providerOptions() ?? [];
@@ -59,7 +60,7 @@ class OpenAiCompatiblePrismProvider extends Groq
     /**
      * @return Generator<StreamEvent>
      */
-    #[\Override]
+    #[Override]
     public function stream(TextRequest $request): Generator
     {
         $this->pendingProviderOptions = $request->providerOptions() ?? [];
@@ -67,7 +68,7 @@ class OpenAiCompatiblePrismProvider extends Groq
         return parent::stream($request);
     }
 
-    #[\Override]
+    #[Override]
     public function structured(StructuredRequest $request): StructuredResponse
     {
         $this->pendingProviderOptions = $request->providerOptions() ?? [];
